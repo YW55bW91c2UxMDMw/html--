@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>spin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* 기존 디자인(CSS) 그대로 유지 */
+        :root {
+            --bg-main: #050510;
+            --bg-card: #101020;
+            --bg-input: #151528;
+            --accent: #ff4f6d;
+            --accent-soft: rgba(255, 79, 109, 0.15);
+            --text-main: #f5f5f5;
+            --text-muted: #a4a4c5;
+            --border-soft: #262648;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #201840 0, #050510 55%, #020208 100%);
+            color: var(--text-main);
+            display: flex; justify-content: center; align-items: center; padding: 16px;
+        }
+        #chat-shell {
+            width: 100%; max-width: 680px; height: 80vh; max-height: 720px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(0,0,0,0.7));
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+            display: flex; flex-direction: column; overflow: hidden;
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+        }
+        #chat-header {
+            padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            background: radial-gradient(circle at top left, rgba(255,79,109,0.15), transparent 55%);
+        }
+        #chat-header-left { display: flex; align-items: center; gap: 12px; }
+        #chat-title { font-weight: 600; font-size: 1rem; }
+        #chat-subtitle { font-size: 0.78rem; color: var(--text-muted); }
+        .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #35d48b; box-shadow: 0 0 8px #35d48b; }
+        #chat-header-right { font-size: 0.75rem; color: var(--text-muted); }
+        #message-list {
+            flex: 1; padding: 14px 18px; overflow-y: auto;
+            background: radial-gradient(circle at top right, rgba(255,79,109,0.06), transparent 55%);
+        }
+        .message-item {
+            margin-bottom: 10px; padding: 8px 10px; border-radius: 10px;
+            border: 1px solid var(--border-soft); background: rgba(7, 7, 18, 0.96);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.45); max-width: 80%; word-wrap: break-word;
+        }
+        .message-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+        .message-username { font-size: 0.82rem; font-weight: 600; color: var(--accent); }
+        .message-time { font-size: 0.7rem; color: var(--text-muted); }
+        .message-body { font-size: 0.86rem; color: var(--text-main); }
+        #input-area {
+            padding: 10px 10px 12px; border-top: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(5,5,18,0.85), rgba(2,2,8,0.95));
+            display: flex; flex-direction: column; gap: 7px;
+        }
+        #top-input-row { display: flex; gap: 8px; }
+        #username-input {
+            width: 110px; padding: 7px 9px; border-radius: 999px; border: 1px solid var(--border-soft);
+            background: var(--bg-input); color: var(--text-main); font-size: 0.8rem; outline: none;
+        }
+        #username-input::placeholder { color: var(--text-muted); }
+        #message-input-row { display: flex; gap: 8px; }
+        #message-input {
+            flex: 1; padding: 9px 11px; border-radius: 999px; border: 1px solid var(--border-soft);
+            background: var(--bg-input); color: var(--text-main); font-size: 0.86rem; outline: none;
+        }
+        #message-input::placeholder { color: var(--text-muted); }
+        #send-button {
+            padding: 0 16px; border-radius: 999px; border: none;
+            background: linear-gradient(135deg, var(--accent), #ff8b4f);
+            color: #fff; font-weight: 600; font-size: 0.86rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            box-shadow: 0 6px 14px rgba(255,79,109,0.45);
+            transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.06s ease;
+        }
+        #send-button:hover { filter: brightness(1.05); box-shadow: 0 8px 18px rgba(255,79,109,0.6); }
+        #send-button:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(255,79,109,0.4); }
+        #footer-note { text-align: right; font-size: 0.7rem; color: var(--text-muted); padding: 0 14px 4px; }
+        #message-list::-webkit-scrollbar { width: 6px; }
+        #message-list::-webkit-scrollbar-track { background: transparent; }
+        #message-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+        @media (max-width: 480px) {
+            #chat-shell { height: 85vh; max-height: none; }
+            #username-input { width: 90px; }
+        }
+        .sausage {
+            position: fixed; top: 50%; width: 350px; height: auto; transform-origin: center center;
+            z-index: 5; pointer-events: none;
+        }
+        .sausage-left { left: 10px; animation: spin-left 1s linear infinite; }
+        .sausage-right { right: 10px; animation: spin-right 1s linear infinite; }
+        @keyframes spin-left { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(360deg); } }
+        @keyframes spin-right { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(-360deg); } }
+        @media (max-width: 480px) {
+            .sausage { width: 55px; } .sausage-left { left: 4px; } .sausage-right { right: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <img src="img/sausage.jpg" alt="sausage" class="sausage sausage-left">
+    <img src="img/sausage.jpg" alt="sausage" class="sausage sausage-right">
+    
+    <div id="chat-shell">
+        <div id="chat-header">
+            <div id="chat-header-left">
+                <div class="status-dot"></div>
+                <div>
+                    <div id="chat-title">익명 채팅 (Cloudflare + Supabase)</div>
+                    <div id="chat-subtitle">PHP 없이 돌아가는 모던한 채팅방</div>
+                </div>
+            </div>
+            <div id="chat-header-right">
+                실시간 연결 · <span id="user-count">∞</span> online
+            </div>
+        </div>
+
+        <div id="message-list"></div>
+
+        <div id="input-area">
+            <div id="top-input-row">
+                <input type="text" id="username-input" value="익명" placeholder="닉네임">
+            </div>
+            <div id="message-input-row">
+                <input type="text" id="message-input" placeholder="메시지 입력 (Enter)">
+                <button id="send-button"><span>전송</span></button>
+            </div>
+            <div id="footer-note">
+                모든 내용은 Supabase DB에 안전하게 저장됩니다.
+            </div>
+        </div>
+    </div>
+    <audio autoplay loop>
+      <source src="music/spin.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // =========================================================
+        // [중요] 여기에 Supabase에서 복사한 본인 키를 넣으세요!
+        // =========================================================
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
+        // =========================================================
+
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+        const messageList   = document.getElementById('message-list');
+        const usernameInput = document.getElementById('username-input');
+        const messageInput  = document.getElementById('message-input');
+        const sendButton    = document.getElementById('send-button');
+
+        // 화면에 메시지 한 개 추가하는 함수
+        function appendMessage(username, text, time) {
+            const item = document.createElement('div');
+            item.className = 'message-item';
+
+            const header = document.createElement('div');
+            header.className = 'message-header';
+
+            const userSpan = document.createElement('span');
+            userSpan.className = 'message-username';
+            userSpan.textContent = username;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = time;
+
+            header.appendChild(userSpan);
+            header.appendChild(timeSpan);
+
+            const body = document.createElement('div');
+            body.className = 'message-body';
+            body.textContent = text;
+
+            item.appendChild(header);
+            item.appendChild(body);
+
+            messageList.appendChild(item);
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+
+        // 메시지 불러오기 (Supabase 사용)
+        async function loadMessages() {
+            // messages 테이블에서 최근 50개를 가져옴 (최신순 정렬)
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) {
+                console.error('에러 발생:', error);
+                return;
+            }
+
+            // 화면을 비우고 다시 그림
+            messageList.innerHTML = '';
+            
+            // 가져온 데이터를 뒤집어서(과거->최신) 화면에 뿌림
+            const reversedData = data.reverse();
+            reversedData.forEach(msg => {
+                // 시간 포맷을 예쁘게 (14:30:00)
+                const date = new Date(msg.created_at);
+                const timeString = date.toTimeString().split(' ')[0];
+                appendMessage(msg.username, msg.message, timeString);
+            });
+        }
+
+        // 메시지 전송하기 (Supabase 사용)
+        async function sendMessage() {
+            const username = usernameInput.value.trim() || '익명';
+            const message  = messageInput.value.trim();
+
+            if (message === '') return;
+
+            // Supabase에 데이터 삽입 (INSERT)
+            const { error } = await supabase
+                .from('messages')
+                .insert({ username: username, message: message });
+
+            if (error) {
+                alert('전송 실패: ' + error.message);
+            } else {
+                messageInput.value = '';
+                loadMessages(); // 전송 후 목록 갱신
+            }
+        }
+
+        // 이벤트 연결
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // 시작할 때 불러오기
+        loadMessages();
+
+        // 2초마다 자동으로 새로고침 (실시간 채팅 효과)
+        setInterval(loadMessages, 2000);
+
+    </script>
+</body>
+</html>
