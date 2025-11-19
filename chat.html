@@ -142,14 +142,11 @@
     <audio autoplay loop>
       <source src="sound/spin.mp3" type="audio/mpeg">
     </audio>
-
     <script>
-        
-    import { createClient } from '@supabase/supabase-js'
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
 
-    const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
-    const supabase = createClient(supabaseUrl, supabaseKey)
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         const messageList   = document.getElementById('message-list');
         const usernameInput = document.getElementById('username-input');
@@ -179,7 +176,6 @@
         }
 
         async function loadMessages() {
-            // [수정됨] supabase -> client 로 변경
             const { data, error } = await client
                 .from('messages')
                 .select('*')
@@ -201,20 +197,19 @@
         }
 
         async function sendMessage() {
-            console.log("전송 시도 중..."); // F12 콘솔 확인용
+            console.log("전송 시도 중..."); 
             const username = usernameInput.value.trim() || '익명';
             const message  = messageInput.value.trim();
 
             if (message === '') return;
 
-            // [수정됨] supabase -> client 로 변경
             const { error } = await client
                 .from('messages')
                 .insert({ username: username, message: message });
 
             if (error) {
                 console.error('전송 에러:', error);
-                alert('전송 실패: ' + error.message); // 에러 내용을 팝업으로 띄움
+                alert('전송 실패: ' + error.message); 
             } else {
                 console.log("전송 성공!");
                 messageInput.value = '';
