@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>HTML Calculator</title>
+<style>body {
+    -webkit-animation: colorchange 0.05s infinite; 
+    animation: colorchange 0.05s infinite;
+    }
+@-webkit-keyframes colorchange {
+
+     0%  {background: red;}
+    25%  {background: pink;}
+    50%  {background: yellow;}
+    75%  {background: #DC7633;}
+    100% {background: #9B59B6;}
+}
+
+
+@keyframes colorchange {
+     0%  {background: red;}
+    25%  {background: pink;}
+    50%  {background: yellow;}
+    75%  {background: #DC7633;}
+    100% {background: #9B59B6;}
+}
+</style>
+</head>
+<body text= "gold">
+<form name="calculator" >
+<input type="button" value="1" onClick="document.calculator.ans.value+='1'">
+<input type="button" value="2" onClick="document.calculator.ans.value+='2'">
+<input type="button" value="3" onClick="document.calculator.ans.value+='3'"><br>
+<input type="button" value="4" onClick="document.calculator.ans.value+='4'">
+<input type="button" value="5" onClick="document.calculator.ans.value+='5'">
+<input type="button" value="6" onClick="document.calculator.ans.value+='6'">
+<input type="button" value="7" onClick="document.calculator.ans.value+='7'"><br>
+<input type="button" value="8" onClick="document.calculator.ans.value+='8'">
+<input type="button" value="9" onClick="document.calculator.ans.value+='9'">
+<input type="button" value="-" onClick="document.calculator.ans.value+='-'">
+<input type="button" value="+" onClick="document.calculator.ans.value+='+'"><br>
+<input type="button" value="*" onClick="document.calculator.ans.value+='*'">
+<input type="button" value="/" onClick="document.calculator.ans.value+='/'">
+
+<input type="button" value="0" onClick="document.calculator.ans.value+='0'">
+<input type="reset" value="Reset">
+<input type="button" value="=" onClick="document.calculator.ans.value=eval(document.calculator.ans.value)">
+<br>Solution is <input type="textfield" name="ans" value="">
+</form>
+<audio autoplay>
+  <source src="sound/gaybar.mp3" type="audio/mpeg">
+Your browser does not support the audio element.
+</audio>
+</body>
+</html>

@@ -1,0 +1,23 @@
+body {
+    text-align: center;
+}
+div {
+    font-size: 25px;
+}
+
+#MLP {
+    color: plum;
+}
+
+.container {
+    color: teal;
+}
+
+.class1 {
+    color: yellow;
+    background-color: black;
+}
+.class2 {
+    color: white;
+    background-color: green;
+}

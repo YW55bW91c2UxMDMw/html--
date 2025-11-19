@@ -1,0 +1,131 @@
+<!DOCTYPE html><!--이런 식으로 주석 입력 가능--> <!--DOCTYPE html은 html5를 사용한다는 의미-->
+<html lang="ko"> <!--css주선은 /* */형식-->
+    <head> <!--head태그는 페이지에 표시 안됨 style, title, meta등 디자인 또는 정보관련 태그를 head안에 씀-->
+        <meta charset="UTF-8"><!-- meta는 메타 데이터 인코딩 날짜 기기의 종류 같은거 문서의 문자 인코딩을 지정-->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>HTML연습</title><!--페이지 상단 바에 뜰 사이트 이름-->
+        <meta name="description" content="검색했을떄 사이트명 아래에 뜰 설명"> <!--페이지 설명-->
+        <meta name="viewport" content="width=device-width, initial-scale=1"> <!--스크롤 기능 제공 기기 화면에 비율을 맞춤-->
+    <style>
+        body {
+            background-image: url('https://media.tenor.com/FxUVtMzYCJYAAAAi/mlp-fim-mlp.gif')
+        }
+        strong {
+            color: red;
+        }
+    </style>
+    </head>
+    <body>
+        <p>Hello world</p>
+        <P>코딩: 컴퓨터에게 명령(코드)를 작성하는것 html에 태그(예, bdoy, head)를 적는거 같은거</P>
+        <h1>프로그래밍: 큰 범위의 코딩 디버그, 테스트, 구현 코드 작성등 모든 개발을 아우러 말하는것</h1>
+        <br><p>웹 페이지: 사이트내 사람들이 볼 내용</p>
+        <h1>웹 사이트: 여러 페이지 들이 모인 묶음 (페이지가 파일이라면 사이트는 폴더)</h1>
+        <p><태그명 요소 > 자체 닫기 태그 img, input, link등의 태그가 자체 닫기 태그</p>
+        <br><h1>자주쓰이는 테그 목록</h1>
+        <p>1. h: 제목 태그
+            <br>br, p, div, span: 줄바꿈, 문단 지정, 영역 지정, 범위 지정
+            <br>link: 현재 문서와 외부 소스를 연결
+            <br>img: 이미지 삽입
+            <br>form: 입력 양식 만들기
+            <br>button: 버튼 만들기
+            <br>ol, ul, li: 순서 있는 목록, 순서 없는 목록, 목록 항목(리스트)
+        </p>
+        <br><h1>모든 h태그 -현재 문단이 h1(가장 큰거)</h1>
+        <h1>h1 제목</h1>
+        <h2>h2 제목</h2>
+        <h3>h3 제목</h3>
+        <h4>h4 제목</h4>
+        <h5>h5 제목</h5>
+        <h6>h6 제목</h6>
+    <P>
+        <br>줄바꿈
+        <div>영역을 나눔</div>
+        <span>범위를 나눔</span>
+    </P>
+    <p style="color: red">난 빨간</p>
+    <p>(div 예시)절망은 자기 자신의 병이며,<div>그렇기 때문에 세 가지 형태를 보인다.</div>절망하여 자기 자신을 소유하는 것을 알지 못하는 형태, 절망하여 자기 자신이길 원하지 않는 형태, 절망하여 자기 자신이길 원하는 형태이다</p>
+    <p>(span예시)절망은 자기 자신의 병이며,<span>그렇기 때문에 세 가지 형태를 보인다. </span>절망하여 자기 자신을 소유하는 것을 알지 못하는 형태, 절망하여 자기 자신이길 원하지 않는 형태, 절망하여 자기 자신이길 원하는 형태이다</p>
+    <link rel="stylesheet" href="styles.css"><!--외부 css파일 연결 js파일을 연결 할수도 있음-->
+    <p>link rel = "속성(stylesheet, icon)" href = "파일 경로"</p>
+    <a href="index.html">메인 페이지</a><!--a태그는 링크를 걸때 사용 href속성으로 링크 주소 지정-->
+    <img src="img/9b3.jpeg" alt="설명" width="400" height="500"><!--img태그는 이미지 삽입시 사용 src속성으로 이미지 경로 지정 alt속성은 이미지가 안뜰때 대체 텍스트 지정-->
+    <p>img src="이미지 경로" alt="설명" width="너비" height="높이"</p>
+    <form action="mad.html">
+        <label for="Fname">성:</label>
+        <input type="text" id="Fname">
+        <label for="Lname">이름:</label>
+        <input type="text" id="Lname">
+        <label for="birth">생년 월일: </label>
+        <input type="date" id="birth">
+        <label type="age">나이:</label>
+        <input type="number" id="age" min="0" max="120">
+        <label for="gender">성별:</label>
+        <select id="gender">
+            <option value="male">남성</option>
+            <option value="female">여성</option>
+            <option value="other">기타</option>
+            <option value="alien">외계인</option>
+        </select>
+        <label for="password">비밀번호:</label>
+        <input type="password" id="password">
+        <label for="gay">당신은 게이입니까?</label>
+        <input type="checkbox" id="gay">
+        <input type="submit" value="제출">
+    </form>
+    <p>form에 type에는 input, text, checkbox, password, date가 있다</p>
+    <form action="index.html">
+        <button type="submit">무료 돈 받기</button>
+    </form>
+    <p>button type="속성값">설명(속성값: button, submit, reset)</p>
+    <p>응용 버전</p>
+    <form action="dansen.html">
+        <button type="submit">댄스 타임!!</button>
+    </form>
+    <p>ol예시</p>
+    <ol>
+        <li>첫 번째 항목</li>
+        <li>두 번째 항목</li>
+        <li>세 번째 항목</li>
+    </ol>
+    <p>ul예시</p>
+    <ul>
+        <li>첫 번째 항목</li>
+        <li>두 번째 항목</li>
+        <li>세 번째 항목</li>
+    </ul>
+        <ul>
+            <li>메인 카테고리
+        <ul>
+            <li>세부 카테고리 1</li>
+            <li>세부 카테고리 2</li>
+            <li>세부 카체고리 3</li>
+        </ul>    
+        </li>
+        </ul>
+    <p>레이아웃용 시멘틱 테그
+        <br>header: 머리말
+        <br>nav: 내비게이션(메뉴)
+        <br>main: 주요 콘텐츠
+        <br>article: 독립적인 콘텐츠
+        <br>section: 구역
+        <br>aside: 여백 콘텐츠(사이드바)
+        <br>footer: 바닥글
+    </p>
+    <p>페이지 배경에 사진 넣기 body {
+            background-image: url('이미지 주소');
+        }</p>
+    <strong><span style="font-size:200px;">이것은 감히 말해진다. 내 상상력은 실행되어진 것들을 덮어버린다. 수많은 악행이 나에 의해 당해졌지만, 나의 상상력이 만든 끔찍함에는 아주 부족한 것이 되어버렸다.</span></strong>
+    <form action="연습2.html">
+        <button type="submit">다음 면</button>
+    </form>
+    <aside>
+        <h2>사이드바 예시</h2>
+        <p>이 영역은 주요 콘텐츠와는 별도로 제공되는 추가 정보나 링크를 포함할 수 있습니다.</p>
+    </aside>
+    <footer>
+        <p>© 2024 나의 웹사이트. 모든 권리 보유 않함</p>
+    </footer>
+    </body>
+</html>
+</DOCTYPE>
