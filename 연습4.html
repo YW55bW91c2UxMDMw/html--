@@ -1,0 +1,79 @@
+<DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>연습4</title>
+        <style>
+            body {
+                height: 1000vh;
+            }
+            div {
+                width: 200;
+                height: 200px;
+                background-color: tomato;
+                position: static;
+            }
+            #second {
+                background-color: teal;
+                position: fixed;
+            }
+            #id1 {
+                position: static;
+            }
+            #id2 {
+                position: fixed;
+            }
+            #h3 {
+                font-size: 200px;
+            }
+            .up {
+                background-color: indigo;
+                width: 100px;
+                height: 100px;
+            }
+            .down {
+                background-color: deeppink;
+                width: 100px;
+                height: 100px;
+                position: relative;
+                top: 20px;
+            }
+            .grandparent {
+                background-color: aqua;
+                width: 200px;
+                height: 200px;
+            }
+            .parent {
+                background-color: blueviolet;
+                width: 150px;
+                height: 150px;
+            }
+            .child {
+                background-color: chartreuse;
+                width: 50px;
+                height: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <div>1</div>
+        <div id="second">2</div>
+        <div>3</div>
+        <br>
+        <br>
+        <img id="id1" src="https://media.tenor.com/qJ77iIB_oJ0AAAAm/plunger-plumbing.webp">
+        <img id="id2" src="https://media.tenor.com/1EH-i6OVaHAAAAAi/toilet.gif">
+        <br>
+        <br>
+        <p id ="h3">형제 관계일 때</p>
+        <div class="up"></div>
+        <div class="down"></div>
+        <div class="grandparent">
+            <div class="parent">
+                <div class="child"></div>
+            </div>
+        </div>
+    </body>
+</html>
+</DOCTYPE>
