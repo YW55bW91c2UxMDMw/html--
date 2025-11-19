@@ -3,11 +3,36 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
+            html,
+            body {
+                height: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
             h1 {
                 border-bottom: 1px solid black;
             }
             div {
                 margin-top: 20px;
+                width: 200px;
+                height: 200px;
+                background-color: tomato;
+            }
+            #second {
+                background-color: seagreen;
+            }
+            #start {
+                align-self: flex-start;
+            }
+            #center {
+                align-self: center;
+            }
+            #end {
+                align-self: flex-end;
+            }
+            #al_stre {
+                display: flex;
+                align-items: center;
             }
         </style>
         <title>Momentum</title>
@@ -17,12 +42,41 @@
         <form action="back.js">
             <button type="submit">Back</button>
         </form>
+        <form action="연습4.html">
+            <button type="submit">Forward</button>
+        </form>
     <div>구분선 넣기</div>
     <p> h1 {
         border-bottom: 1px solid black;
     }
     </p>
-        
+    <h1>레이아웃</h1>
+        <div></div>
+        <div id="second"></div>
+        <div></div>
+    <p>display 속성값에는 block, inline, flow, grid, flex가 있다</p>
+    <p>주축 정렬 목록</p>
+    <ul>
+        <li>flex-start: 시작 부분에 정렬</li>
+        <li>flex-end: 끝에 정렬</li>
+        <li>center: 중앙에 정렬</li>
+        <li>space-between: 박스 각 사이에 공간을 만듬</li>
+        <li>space-around: 사이와 끝 가장자리에도 공간 생김</li>
+    </ul>
+    <div>정렬 예시</div>
+    <p>body {
+        display: flex;
+        justify-content: space-between;
+    }
+    </p>
+    <p id="start"></p>
+    <p id="center"></p>
+    <p id="end"></p>
+    <div>교차축 정렬</div>
+    <p>stretch: 요소의 길이와 교차축의 길이를 같게 함</p>
+    <p>flex-start: 시작 위치에 정렬</p>
+    <p>flex-end: 끝 위치에 정렬</p>
+    <p>center: 중앙에 정렬</p>
     </body>
     </html>
 </DOCTYPE>
