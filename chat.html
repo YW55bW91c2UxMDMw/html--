@@ -144,109 +144,92 @@
     </audio>
 
     <script>
-        // =========================================================
-        // [중요] 여기에 Supabase에서 복사한 본인 키를 넣으세요!
+        // [중요] Supabase 설정 건들이지 말것!
         // =========================================================
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
         // =========================================================
 
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         const messageList   = document.getElementById('message-list');
         const usernameInput = document.getElementById('username-input');
         const messageInput  = document.getElementById('message-input');
         const sendButton    = document.getElementById('send-button');
 
-        // 화면에 메시지 한 개 추가하는 함수
         function appendMessage(username, text, time) {
             const item = document.createElement('div');
             item.className = 'message-item';
-
             const header = document.createElement('div');
             header.className = 'message-header';
-
             const userSpan = document.createElement('span');
             userSpan.className = 'message-username';
             userSpan.textContent = username;
-
             const timeSpan = document.createElement('span');
             timeSpan.className = 'message-time';
             timeSpan.textContent = time;
-
             header.appendChild(userSpan);
             header.appendChild(timeSpan);
-
             const body = document.createElement('div');
             body.className = 'message-body';
             body.textContent = text;
-
             item.appendChild(header);
             item.appendChild(body);
-
             messageList.appendChild(item);
             messageList.scrollTop = messageList.scrollHeight;
         }
 
-        // 메시지 불러오기 (Supabase 사용)
         async function loadMessages() {
-            // messages 테이블에서 최근 50개를 가져옴 (최신순 정렬)
-            const { data, error } = await supabase
+            // [수정됨] supabase -> client 로 변경
+            const { data, error } = await client
                 .from('messages')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(50);
 
             if (error) {
-                console.error('에러 발생:', error);
+                console.error('불러오기 에러:', error);
                 return;
             }
-
-            // 화면을 비우고 다시 그림
-            messageList.innerHTML = '';
             
-            // 가져온 데이터를 뒤집어서(과거->최신) 화면에 뿌림
+            messageList.innerHTML = '';
             const reversedData = data.reverse();
             reversedData.forEach(msg => {
-                // 시간 포맷을 예쁘게 (14:30:00)
                 const date = new Date(msg.created_at);
                 const timeString = date.toTimeString().split(' ')[0];
                 appendMessage(msg.username, msg.message, timeString);
             });
         }
 
-        // 메시지 전송하기 (Supabase 사용)
         async function sendMessage() {
+            console.log("전송 시도 중..."); // F12 콘솔 확인용
             const username = usernameInput.value.trim() || '익명';
             const message  = messageInput.value.trim();
 
             if (message === '') return;
 
-            // Supabase에 데이터 삽입 (INSERT)
-            const { error } = await supabase
+            // [수정됨] supabase -> client 로 변경
+            const { error } = await client
                 .from('messages')
                 .insert({ username: username, message: message });
 
             if (error) {
-                alert('전송 실패: ' + error.message);
+                console.error('전송 에러:', error);
+                alert('전송 실패: ' + error.message); // 에러 내용을 팝업으로 띄움
             } else {
+                console.log("전송 성공!");
                 messageInput.value = '';
-                loadMessages(); // 전송 후 목록 갱신
+                loadMessages();
             }
         }
 
-        // 이벤트 연결
         sendButton.addEventListener('click', sendMessage);
         messageInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
-        // 시작할 때 불러오기
         loadMessages();
-
-        // 2초마다 자동으로 새로고침 (실시간 채팅 효과)
         setInterval(loadMessages, 2000);
-
     </script>
 </body>
 </html>
