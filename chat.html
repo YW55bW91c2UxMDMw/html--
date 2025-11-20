@@ -93,30 +93,16 @@
             #chat-shell { height: 85vh; max-height: none; }
             #username-input { width: 90px; }
         }
-        .sausage {
-            position: fixed; top: 50%; width: 350px; height: auto; transform-origin: center center;
-            z-index: 5; pointer-events: none;
-        }
-        .sausage-left { left: 10px; animation: spin-left 1s linear infinite; }
-        .sausage-right { right: 10px; animation: spin-right 1s linear infinite; }
-        @keyframes spin-left { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(360deg); } }
-        @keyframes spin-right { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(-360deg); } }
-        @media (max-width: 480px) {
-            .sausage { width: 55px; } .sausage-left { left: 4px; } .sausage-right { right: 4px; }
-        }
     </style>
 </head>
 <body>
-    <img src="img/sausage.jpg" alt="sausage" class="sausage sausage-left">
-    <img src="img/sausage.jpg" alt="sausage" class="sausage sausage-right">
-    
     <div id="chat-shell">
         <div id="chat-header">
             <div id="chat-header-left">
                 <div class="status-dot"></div>
                 <div>
-                    <div id="chat-title">익명 채팅 (Cloudflare + Supabase)</div>
-                    <div id="chat-subtitle">PHP 없이 돌아가는 모던한 채팅방</div>
+                    <div id="chat-title">익명 자유 채팅</div>
+                    <div id="chat-subtitle">모르는 사람들과의 만남</div>
                 </div>
             </div>
             <div id="chat-header-right">
@@ -135,13 +121,10 @@
                 <button id="send-button"><span>전송</span></button>
             </div>
             <div id="footer-note">
-                모든 내용은 Supabase DB에 안전하게 저장됩니다.
+                상대방을 존중하세요
             </div>
         </div>
     </div>
-    <audio autoplay loop>
-      <source src="sound/spin.mp3" type="audio/mpeg">
-    </audio>
     <script>
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'

@@ -1,74 +1,156 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="google-adsense-account" content="ca-pub-7838775301044945">
-<style>
-body {
-	background-color: midnightblue;
-}
-.dropbtn {
-    background-color: black;
-    color: white;
-    padding: 8px 12px;
-    font-size: 16px;
-    border: none;
-}
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: lightgrey;
-    min-width: 160px;
-    z-index: 1;
-}
-.dropdown-content a {
-    color: black;
-    padding: 8px 12px;
-    text-decoration: none;
-    display: block;
-}
-.dropdown-content a:hover {background-color: white;}
-.dropdown:hover .dropdown-content {display: block;}
-.dropdown:hover .dropbtn {background-color: grey;}
-</style>
-<title>제목 상단 탭에 뜰 내용</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jindostar project 메인 페이지</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000022; /* 어두운 우주 느낌 */
+            color: #ffffff;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 16px 64px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header img {
+            display: block;
+            margin: 16px auto 8px;
+            width: 200px;
+            height: 200px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            font-size: 0.95rem;
+            color: #ccccff;
+        }
+
+        nav.main-nav {
+            margin: 32px 0;
+            padding: 16px;
+            border: 1px solid #4455aa;
+            border-radius: 8px;
+            background-color: #000033;
+        }
+
+        nav.main-nav h2 {
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+
+        nav.main-nav ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 8px 0 0;
+        }
+
+        nav.main-nav li {
+            margin: 6px 0;
+        }
+
+        nav.main-nav a {
+            color: #99ccff;
+            text-decoration: none;
+        }
+
+        nav.main-nav a:hover {
+            text-decoration: underline;
+        }
+
+        .terminal-link {
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        .terminal-link a {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #66ccff;
+            color: #66ccff;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .terminal-link a:hover {
+            background-color: #001133;
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #333366;
+            padding-top: 16px;
+            font-size: 0.85rem;
+            color: #bbbbbb;
+        }
+
+        footer nav a {
+            color: #99ccff;
+            text-decoration: none;
+        }
+
+        footer nav a:hover {
+            text-decoration: underline;
+        }
+
+        footer p {
+            margin: 8px 0 0;
+            line-height: 1.4;
+        }
+    </style>
 </head>
 <body>
-<h1>해딩 크고 굵은 텍스트 상단에 보통 쓴다 제목이나 환영 인사를 입력할수 있다</h1>
-<div class="dropdown">
-<button class="dropbtn">메뉴</button>
-<div class="dropdown-content">
-<a href="mad.html">???</a>
-<a href="cal.html">!!!</a>
-<a href="php/LOL.php">LOL</a>
-<a href="chat.html"> 网上聊天</a>
-</div></div>
-<h6>해딩에는 h1~ h6까지 존재 하고 h6이 가장 작은 크기이다.</h6>
-<p>단락을 연다 일반 텍스트</p>
-<p><font color="red">일반 텍스트에 색상 입히기</font></p>
-<br><b>굵은 텍스트 즉, 볼드체</b>
-<br><i>기울어진 텍스트</i>
-<br><u>밑줄이 있는 텍스트</u>
-<sub>아래 첨자 텍스트(쓸일없음)</sub>
-<sup>위 첨자 텍스트(쓸일없음)</sup>
-<br><strong>꾸미는 용도가 아닌 기능적 용도의 굵은 텍스트(웹페이지 인식 더 잘됨)</strong>
-<br><em>꾸미는 용도가 아닌 기능적 용도의 기울기 텍스트(웹페이지 인식 더 잘됨)</em>
-<br><small>작은 텍스트</small>
-<br><del>취소선</del>
-<hr>
-<br><blockquote>뭔가를 인용할 때 사용하면 되는 태그이다. </blockquote> 출처를 표시할 때에는 <cite> 태그 </cite>를 쓰면 된다.
-<div style="color:red;">
-<a href="mad.html"><img src="https://media.tenor.com/8lR3_1m-i94AAAAi/cat.gif" alt="cat gif"><span>Click me!</span></a>
-<br><a href="cal.html"><img src="https://media.tenor.com/Qg1We6MowLIAAAAi/kirby-wakes-up.gif" alt="kirby gif"></a>
-<br><a href="연습.html"><img src="https://media.tenor.com/jN-mdRIDNaYAAAAi/doraemon-hula-hoop.gif" alt="doraemon gif"></a>
+<div class="wrapper">
+    <header>
+        <h1>jindostar project의 대문에 오신 걸 환영합니다</h1>
+        <img src="img/jindostar.png" alt="jindostar 로고">
+        <p>루미가 운영하는 작은 우주 실험실 · BBS · 토큰 프로젝트 허브</p>
+    </header>
+
+    <nav class="main-nav">
+        <h2>메인 메뉴</h2>
+        <ul>
+            <li><a href="board.html">자유 게시판</a></li>
+            <li><a href="BBS.html">BBS 접속하기</a></li>
+            <li><a href="저장소.html">저장소 바로가기</a></li>
+            <li><a href="chat.html">익명 자유 채팅</a></li>
+            <li><a href="연습1.html">연습용 페이지</a></li>
+        </ul>
+    </nav>
+
+    <div class="terminal-link">
+        <a href="terminal.html">▶ 터미널 모드로 접속하기</a>
+    </div>
+
+    <footer>
+        <nav>
+            <a href="https://github.com/YW55bW91c2UxMDMw" target="_blank" rel="noopener noreferrer">Github</a> |
+            <a href="http://rumilwiuavvvqqt4ybvgvi7tyo4hjl5xgfuvpdf6otjiycgwqbym2qad.onion/"
+               target="_blank" rel="noopener noreferrer">Hidden site (.onion)</a>
+        </nav>
+        <p>
+            <span>관리자: 루미</span><br>
+            <span>이메일: msbae1@protonmail.ch</span><br>
+            <span>Copyright 2025. Rumi. All Rights Reserved.</span>
+        </p>
+    </footer>
 </div>
 </body>
 </html>
