@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOCHAN - Anon Space</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* 🌌 [JindoStar 우주 테마 시스템] */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;       /* 네온 시안 (JindoFlix 통일) */
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --glass-bg: rgba(20, 20, 35, 0.6); /* 반투명 유리색 */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+            --quote-color: #a6e22e;  /* 인용구 (해커 그린) */
+            --admin-color: #ff4f6d;  /* 관리자/강조 색 */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 별 배경 (JindoFlix와 동일) */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            min-height: 100vh;
+        }
+
+        a { color: var(--text-sub); text-decoration: none; transition: 0.3s; }
+        a:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+
+        /* 상단 네비게이션 */
+        .top-bar {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            display: flex; gap: 15px;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .top-bar a.active { color: var(--accent); font-weight: bold; }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 900px;
+            margin: 80px auto 40px auto; /* 헤더 높이만큼 띄움 */
+            padding: 0 15px;
+        }
+
+        /* 타이틀 섹션 */
+        .board-header { text-align: center; margin-bottom: 40px; }
+        .board-title {
+            font-size: 2.5rem; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 20px var(--accent-glow);
+            letter-spacing: 2px; margin: 0;
+        }
+        .board-subtitle { color: var(--text-sub); font-size: 0.9rem; margin-top: 5px; }
+
+        /* ✨ 글쓰기 폼 (유리 패널 스타일) */
+        .post-form {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 50px;
+            transition: 0.3s;
+        }
+        .post-form:focus-within { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; gap: 10px; }
+        
+        /* 인풋 스타일 (터미널 느낌) */
+        input, textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: white;
+            padding: 10px;
+            font-family: 'Pretendard', monospace;
+            font-size: 0.95rem;
+            outline: none; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
+        textarea { resize: vertical; height: 80px; }
+        ::placeholder { color: #555; }
+
+        /* 파일 업로드 버튼 커스텀 */
+        input[type="file"] { padding: 5px; font-size: 0.8rem; }
+
+        /* 전송 버튼 */
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, var(--accent), #0066ff);
+            color: white; border: none; border-radius: 6px;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: 0.3s;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--accent-glow); }
+
+        /* 🧵 게시글 목록 (스레드) */
+        .thread {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /* 작성자 헤더 */
+        .post-meta { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px; display: flex; gap: 10px; align-items: center;}
+        .post-meta .name { color: var(--accent); font-weight: bold; }
+        .post-meta .subject { color: #fff; font-weight: 700; font-size: 1rem; }
+        .post-meta .id { font-family: monospace; color: #666; }
+        .post-no { cursor: pointer; color: #fff; }
+        .post-no:hover { color: var(--admin-color); }
+
+        /* 본문 레이아웃 */
+        .post-body { display: flex; gap: 20px; align-items: flex-start; }
+        
+        /* 이미지 */
+        .post-img-wrap { flex-shrink: 0; }
+        .post-thumb {
+            max-width: 200px; max-height: 200px;
+            border-radius: 4px; border: 1px solid #333;
+            cursor: pointer; transition: 0.3s;
+        }
+        .post-thumb:hover { border-color: var(--accent); }
+        
+        /* 텍스트 내용 */
+        .post-text { 
+            flex-grow: 1; white-space: pre-wrap; line-height: 1.6; color: #eee; font-size: 0.95rem; 
+        }
+        .greentext { color: var(--quote-color); } /* > 인용구 색상 */
+
+        /* 💬 답글 (Reply) */
+        .reply-box {
+            margin-top: 15px;
+            margin-left: 20px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 3px solid #333;
+            border-radius: 0 6px 6px 0;
+        }
+        .reply-box:hover { border-left-color: var(--accent); background: rgba(255, 255, 255, 0.05); }
+
+        /* 모바일 최적화 */
+        @media (max-width: 600px) {
+            .post-body { flex-direction: column; }
+            .post-thumb { max-width: 150px; }
+            .form-row { flex-direction: column; gap: 10px; }
+        }
+
+        /* 로딩 애니메이션 */
+        .loading { text-align: center; color: var(--accent); font-family: monospace; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+    </style>
+</head>
+<body>
+
+    <nav class="top-bar">
+        <a href="/">JINDOFLIX</a>
+        <a href="/board.html" class="active">/b/ 익명채널</a>
+        <a href="#" onclick="alert('준비중')">/hack/ 정보</a>
+    </nav>
+
+    <div class="container">
+        <div class="board-header">
+            <h1 class="board-title">/BOARD/</h1>
+            <div class="board-subtitle">Anonymous Communication Uplink established.</div>
+        </div>
+
+        <div class="post-form">
+            <div class="form-row">
+                <input type="text" id="input-name" placeholder="닉네임 (비우면 익명)" style="flex: 1;">
+                <input type="password" id="input-password" placeholder="삭제 비밀번호 (필수)" style="flex: 1;">
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <input type="text" id="input-subject" placeholder="제목 (선택사항)">
+            </div>
+            <div class="form-group">
+                <textarea id="input-comment" placeholder="내용을 입력하세요... ( > 로 시작하면 초록색이 됩니다)"></textarea>
+            </div>
+            <div class="form-row" style="align-items: center;">
+                <input type="file" id="input-file" style="flex: 2;">
+                <button class="btn-submit" onclick="submitPost()">전송 (UPLOAD)</button>
+            </div>
+        </div>
+
+        <div id="thread-list">
+            <div class="loading">/// RECEIVING DATA FROM DEEP SPACE... ///</div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================
+        // [필수] 본인의 Supabase 키로 교체하세요!
+        // =================================================
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 게시글 불러오기
+        async function loadPosts() {
+            const { data, error } = await client
+                .from('board_posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const list = document.getElementById('thread-list');
+            list.innerHTML = ''; // 로딩 메시지 제거
+
+            if (error) {
+                list.innerHTML = `<div style="text-align:center; color:red;">신호 수신 실패: ${error.message}</div>`;
+                return;
+            }
+
+            // 스레드(원글) 렌더링
+            data.forEach(post => {
+                if (post.parent_id === null) {
+                    const thread = document.createElement('div');
+                    thread.className = 'thread';
+                    
+                    // 이미지
+                    let imgHtml = '';
+                    if (post.image_url) {
+                        imgHtml = `
+                            <div class="post-img-wrap">
+                                <img src="${post.image_url}" class="post-thumb" onclick="toggleImage(this)">
+                            </div>`;
+                    }
+
+                    // 내용 (그린텍스트 처리)
+                    let contentHtml = post.content
+                        .replace(/</g, "&lt;") // XSS 방지
+                        .replace(/^>(.*)$/gm, '<span class="greentext">>$1</span>');
+
+                    thread.innerHTML = `
+                        <div class="post-meta">
+                            <span class="subject">${post.subject || '무제'}</span>
+                            <span class="name">${post.name || 'Anonymous'}</span>
+                            <span class="id">${new Date(post.created_at).toLocaleString()}</span>
+                            <span class="post-no" onclick="addReplyLink(${post.id})">No.${post.id}</span>
+                            <a href="#" style="font-size:0.8rem;" onclick="addReplyLink(${post.id}); return false;">[답글]</a>
+                        </div>
+                        <div class="post-body">
+                            ${imgHtml}
+                            <div class="post-text">${contentHtml}</div>
+                        </div>
+                        <div id="replies-${post.id}" style="margin-top:10px;"></div>
+                    `;
+                    list.appendChild(thread);
+                }
+            });
+
+            // 댓글(Reply) 렌더링
+            data.forEach(post => {
+                if (post.parent_id !== null) {
+                    const parentDiv = document.getElementById(`replies-${post.parent_id}`);
+                    if (parentDiv) {
+                        const reply = document.createElement('div');
+                        reply.className = 'reply-box';
+                        
+                        let imgHtml = post.image_url ? `<div style="margin-bottom:5px;"><a href="${post.image_url}" target="_blank" style="color:#00d4ff;">[이미지 첨부]</a></div>` : '';
+                        let contentHtml = post.content
+                            .replace(/</g, "&lt;")
+                            .replace(/^>(.*)$/gm, '<span class="greentext">>$1</span>');
+
+                        reply.innerHTML = `
+                            <div class="post-meta">
+                                <span class="name">${post.name || 'Anonymous'}</span>
+                                <span class="id">${new Date(post.created_at).toLocaleString()}</span>
+                                <span class="post-no">No.${post.id}</span>
+                            </div>
+                            <div class="post-text">
+                                ${imgHtml}
+                                ${contentHtml}
+                            </div>
+                        `;
+                        parentDiv.appendChild(reply);
+                    }
+                }
+            });
+        }
+
+        // 글쓰기
+        async function submitPost() {
+            const name = document.getElementById('input-name').value;
+            const subject = document.getElementById('input-subject').value;
+            const content = document.getElementById('input-comment').value;
+            const password = document.getElementById('input-password').value;
+            const fileInput = document.getElementById('input-file');
+
+            if (!content && !fileInput.files.length) {
+                alert("내용이나 이미지는 필수입니다.");
+                return;
+            }
+            if (!password) {
+                alert("삭제를 위해 비밀번호를 입력해주세요.");
+                return;
+            }
+
+            let imageUrl = null;
+
+            // 1. 이미지 업로드
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                
+                const { data, error } = await client.storage
+                    .from('board_images') // 버킷 이름 확인!
+                    .upload(fileName, file);
+                
+                if (error) {
+                    alert("이미지 업로드 실패: " + error.message);
+                    return;
+                }
+                
+                const { data: urlData } = client.storage.from('board_images').getPublicUrl(fileName);
+                imageUrl = urlData.publicUrl;
+            }
+
+            // 2. DB 저장
+            const { error } = await client
+                .from('board_posts')
+                .insert({
+                    name: name || 'Anonymous',
+                    subject: subject,
+                    content: content,
+                    password: password,
+                    image_url: imageUrl,
+                    parent_id: window.replyTargetId || null
+                });
+
+            if (error) {
+                alert("글쓰기 실패: " + error.message);
+            } else {
+                location.reload();
+            }
+        }
+
+        // 이미지 클릭시 확대/축소
+        function toggleImage(img) {
+            if (img.style.maxWidth === '100%') {
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+            } else {
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+            }
+        }
+
+        // 답글 모드
+        function addReplyLink(id) {
+            window.replyTargetId = id;
+            const textarea = document.getElementById('input-comment');
+            textarea.value = `>>${id}\n` + textarea.value;
+            textarea.focus();
+            window.scrollTo(0,0);
+            document.querySelector('.btn-submit').innerText = `No.${id}에 답글 작성 중...`;
+        }
+
+        loadPosts();
+    </script>
+
+</body>
+</html>

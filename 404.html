@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>404 Not Found - JINDOSTAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <style>
+        /* [공통 디자인] index.html과 통일감 유지 */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;
+            --text-main: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 배경 효과 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            animation: float 3s ease-in-out infinite; /* 둥둥 떠다니는 효과 */
+        }
+
+        /* 귀여운 여우 이미지 */
+        .error-img {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 50%; /* 동그랗게 만들기 */
+            border: 4px solid var(--accent);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            margin-bottom: 30px;
+        }
+
+        /* 텍스트 디자인 */
+        h1 {
+            font-size: 6rem;
+            font-weight: 900;
+            margin: 0;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            line-height: 1;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #aaa;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        /* 버튼 디자인 */
+        .btn-home {
+            display: inline-block;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            background-color: var(--accent);
+            color: #000;
+            transition: 0.3s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-home:hover {
+            transform: scale(1.1);
+            background-color: white;
+            box-shadow: 0 0 30px white;
+        }
+
+        .countdown {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* 둥둥 떠다니는 애니메이션 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="img/404.png" alt="공사중인 여우" class="error-img">
+        
+        <h1>404</h1>
+        <h2>여기가 어디죠...?</h2>
+        
+        <p>
+            죄송합니다. 요청하신 페이지를 찾을 수 없습니다.<br>
+            입력하신 주소가 정확한지 다시 한번 확인해 주세요.<br>
+            혹은 블랙홀로 빨려 들어갔을지도 모릅니다.
+        </p>
+
+        <a href="/" class="btn-home">메인으로 탈출하기</a>
+
+        <div class="countdown">
+            <span id="timer">5</span>초 뒤에 메인 화면으로 자동 이동합니다.
+        </div>
+    </div>
+
+    <script>
+        // 5초 뒤 자동 이동 스크립트
+        let timeLeft = 5;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "/"; // 메인으로 이동
+            }
+        }, 1000);
+    </script>
+
+</body>
+</html>
