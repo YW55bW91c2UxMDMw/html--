@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조선어 교정 체계 v5.0 (보안 강화판)</title>
+    <style>
+        /* 1. 기본 설정 */
+        body {
+            background-color: #b0b0b0;
+            font-family: 'Gungsuh', 'GungsuhChe', 'Batang', serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 2. 메인 창 */
+        .window-container {
+            width: 800px;
+            background-color: #ece9d8;
+            border: 2px solid #555;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+            padding: 3px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 타이틀 바 */
+        .title-bar {
+            background: linear-gradient(to right, #8b0000, #a00000);
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #444;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .title-bar-controls span {
+            background-color: #ece9d8;
+            color: black;
+            border: 1px outset #fff;
+            padding: 0 4px;
+            font-size: 12px;
+            margin-left: 3px;
+            font-family: sans-serif;
+            cursor: default;
+        }
+
+        /* 컨텐츠 내부 */
+        .content-area {
+            padding: 15px;
+            border: 1px solid #888;
+            background-color: #f4f4f4;
+        }
+
+        /* 경고 문구 */
+        .warning-box {
+            border: 2px solid #ff0000;
+            background-color: #ffffcc;
+            color: #cc0000;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        .label-text {
+            font-size: 16px;
+            color: #000;
+            margin-bottom: 5px;
+            display: block;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        /* 입력창 (Textarea) */
+        textarea {
+            width: 97%;
+            height: 100px;
+            background-color: #fff;
+            border: 2px inset #dcdcdc;
+            font-family: 'Gungsuh', serif;
+            font-size: 16px;
+            padding: 10px;
+            resize: none;
+            outline: none;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        /* 결과창 (Div - HTML 태그 적용을 위해 변경) */
+        .output-div {
+            width: 97%;
+            height: 100px;
+            background-color: #e6e6e6;
+            border: 2px inset #dcdcdc;
+            font-family: 'Gungsuh', serif;
+            font-size: 16px;
+            padding: 10px;
+            overflow-y: auto;
+            color: #000080;
+            margin-bottom: 15px;
+        }
+
+        /* 버튼 영역 */
+        .button-area {
+            text-align: center;
+            margin: 10px 0 20px 0;
+            background-color: #d4d0c8;
+            border: 1px solid #888;
+            padding: 10px;
+        }
+
+        button {
+            background-color: #ece9d8;
+            border: 2px outset #fff;
+            font-family: 'Gungsuh', serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+            padding: 5px 30px;
+            cursor: pointer;
+        }
+
+        button:active {
+            border: 2px inset #fff;
+            padding: 6px 29px 4px 31px;
+        }
+
+        button.convert-btn {
+            color: #8b0000;
+        }
+
+        .status-bar {
+            margin-top: 10px;
+            border-top: 1px solid #999;
+            padding-top: 5px;
+            font-size: 12px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- [특수 효과 CSS] --- */
+        
+        /* 최고존엄 강조 스타일 */
+        .sacred-name {
+            font-weight: 900;
+            font-size: 1.1em;
+            color: #000; /* 혹은 북한 출판물처럼 굵은 검은색 */
+        }
+
+        /* 경고 팝업 (평소엔 숨김) */
+        #alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(255, 0, 0, 0.6); /* 붉은색 반투명 배경 */
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .alert-box {
+            width: 500px;
+            background-color: #fff;
+            border: 5px solid #ff0000;
+            box-shadow: 0 0 30px #ff0000;
+            text-align: center;
+            padding: 20px;
+            font-family: 'Gungsuh', serif;
+        }
+
+        .alert-title {
+            font-size: 24px;
+            color: red;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-decoration: underline;
+            animation: blink 0.5s infinite;
+        }
+
+        .alert-msg {
+            font-size: 16px;
+            color: black;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .ip-trace {
+            background-color: black;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="alert-overlay">
+        <div class="alert-box">
+            <div class="alert-title">⚠ 경고: 반동 사상 감지됨! ⚠</div>
+            <div class="alert-msg">
+                귀하가 입력한 문장에서 <b>국가 전복을 꾀하는 불순한 단어</b>가 발견되였다.<br>
+                보위사령부 제3국 감시망에 의해 귀하의 위치가 즉시 파악되였음을 통보한다.
+                <br><br>
+                <span style="color:red; font-weight:bold;">지금 즉시 자수하지 않을 시 엄중한 처벌을 면치 못할 것이다.</span>
+            </div>
+            <div class="ip-trace" id="trace-log">
+                > TRACING IP ADDRESS...<br>
+                > CONNECTION ESTABLISHED.<br>
+                > UPLOADING USER DATA TO PYONGYANG SERVER...
+            </div>
+            <br>
+            <button onclick="location.reload()">체계 강제 종료</button>
+        </div>
+    </div>
+
+    <div class="window-container">
+        <div class="title-bar">
+            <span>⚒ 우리말 교정 체계 v5.0 (보안 강화판)</span>
+            <div class="title-bar-controls">
+                <span>_</span>
+                <span>□</span>
+                <span>X</span>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="warning-box">
+                ※ 경고: 본 프로그램은 '백두산 저작권' 보호를 받음.<br>
+                최고 존엄의 존함을 입력할 시 자동으로 경의가 표해짐.
+            </div>
+
+            <label class="label-text" for="input-text">▶ 교정할 문장 입력 (남조선말)</label>
+            <textarea id="input-text" placeholder="여기에 교정할 문장을 입력하시오."></textarea>
+
+            <div class="button-area">
+                <button class="convert-btn" onclick="convertToNorth()">교정 실행</button>
+                <span style="width: 20px; display:inline-block;"></span>
+                <button onclick="document.getElementById('input-text').value=''; document.getElementById('output-div').innerHTML=''">입력 지우기</button>
+            </div>
+
+            <label class="label-text" for="output-div">▶ 교정된 문장 (문화어)</label>
+            <div id="output-div" class="output-div"></div>
+
+            <div class="status-bar">
+                <span>서버 상태: <span style="color:green; font-weight:bold;">● 감시 중</span></span>
+                <span>보안 등급: 1급 비밀 (Top Secret)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convertToNorth() {
+            let text = document.getElementById('input-text').value;
+            const outputDiv = document.getElementById('output-div');
+
+            // 1. [감시 시스템] 금지어 목록 (반동적인 단어들)
+            const bannedWords = ['독재', '자유', '탈북', '미국', '민주주의', '거짓말', '돼지', '뚱땡이', '인권', '남한', '대한민국'];
+            
+            for (let word of bannedWords) {
+                if (text.includes(word)) {
+                    // 금지어 발견 시 공포 모드 발동
+                    triggerTrap();
+                    return; // 변환 중단
+                }
+            }
+
+            // 2. [단어장] 일반 어휘 변환
+            const vocabs = {
+                '화장실': '위생실', '친구': '동무', '핸드폰': '손전화', '스마트폰': '지능형손전화',
+                '아이스크림': '에스킴', '도시락': '곽밥', '다이어트': '살까기', '주스': '과일단물',
+                '원피스': '달린옷', '아파트': '고층살림집', '네티즌': '망시민', '홈페이지': '홈페지',
+                '캠페인': '깜빠니아', '트랙터': '뜨락또르', '소세지': '칼파스', '도넛': '가락지빵',
+                '라면': '꼬부랑국수', '어묵': '물고기떡', '우유': '소젖', '패션': '옷차림', 
+                '로그인': '접속', '클릭': '누르기', '링크': '련결', '파일': '자료', 
+                '다운로드': '내려받기', '서비스': '봉사', '메뉴': '차림표', '데이터': '자료'
+            };
+
+            // 3. [문법 교정]
+            // 두음법칙
+            text = text.replace(/여/g, '녀').replace(/여자/g, '녀자')
+                       .replace(/여행/g, '려행').replace(/역사/g, '력사')
+                       .replace(/연습/g, '련습').replace(/이용/g, '리용')
+                       .replace(/이해/g, '리해').replace(/노동/g, '로동')
+                       .replace(/노인/g, '로인').replace(/내일/g, '래일')
+                       .replace(/낙원/g, '락원').replace(/냉면/g, '랭면')
+                       .replace(/유행/g, '류행').replace(/이론/g, '리론');
+            
+            // 어미 (딱딱하게)
+            text = text.replace(/에요/g, '입니다').replace(/어요/g, '오')
+                       .replace(/할게/g, '하겠소').replace(/이야/g, '이다')
+                       .replace(/너무/g, '그야말로').replace(/정말/g, '참말로')
+                       .replace(/했습니다/g, '하였오').replace(/합니다/g, '함')
+                       .replace(/게/g, '것이').replace(/거야/g, '것이다');
+
+            // 단어 치환 적용
+            for (let key in vocabs) {
+                let regex = new RegExp(key, 'g');
+                text = text.replace(regex, vocabs[key]);
+            }
+
+            // 4. [신격화] 최고 존함 자동 교정 (HTML 태그 삽입)
+            // 이름이 보이면 자동으로 굵고 크게 만들고 존칭 추가
+            const sacredList = {
+                '김일성': '<b><span class="sacred-name">위대한 수령 김일성동지</span></b>',
+                '김정일': '<b><span class="sacred-name">위대한 령도자 김정일동지</span></b>',
+                '김정은': '<b><span class="sacred-name">경애하는 최고령도자 김정은동지</span></b>'
+            };
+
+            for (let name in sacredList) {
+                let regex = new RegExp(name, 'g');
+                text = text.replace(regex, sacredList[name]);
+            }
+
+            // 결과 출력 (innerHTML 사용)
+            outputDiv.innerHTML = text;
+        }
+
+        // [공포] 함정 발동 함수
+        function triggerTrap() {
+            const overlay = document.getElementById('alert-overlay');
+            const log = document.getElementById('trace-log');
+            
+            // 1. 팝업 띄우기
+            overlay.style.display = 'flex';
+            
+            // 2. 추적 로그 시뮬레이션
+            let dots = 0;
+            const traceInterval = setInterval(() => {
+                dots++;
+                log.innerHTML += ".";
+                if(dots % 10 === 0) log.innerHTML += "<br>> SENDING GPS DATA...";
+                if(dots > 30) {
+                    clearInterval(traceInterval);
+                    log.innerHTML += "<br>> <span style='color:red'>TRACE COMPLETE. TARGET LOCKED.</span>";
+                }
+                // 스크롤 아래로 내리기
+                log.scrollTop = log.scrollHeight; 
+            }, 200);
+        }
+
+        // 엔터키 입력 시 변환
+        document.getElementById("input-text").addEventListener("keydown", function (event) {
+            if (event.keyCode === 13 && (event.metaKey || event.ctrlKey)) {
+                convertToNorth();
+            }
+        });
+    </script>
+
+</body>
+</html>
