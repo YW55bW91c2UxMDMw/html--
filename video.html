@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - Universe OTT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* 🌌 Deep Space Design System */
+        :root {
+            --bg-deep: #050510;
+            --bg-card: #101020;
+            --accent: #00d4ff;  /* 네온 시안 */
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        header {
+            position: fixed; top: 0; width: 100%; height: 70px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 4%; z-index: 100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+            transition: background 0.3s;
+        }
+        header.scrolled { background: #050510; }
+        .logo { font-size: 1.8rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 15px var(--accent); letter-spacing: -1px; }
+        .nav-menu a { color: #ccc; text-decoration: none; margin-left: 25px; font-size: 0.95rem; font-weight: 600; transition: color 0.3s; }
+        .nav-menu a:hover { color: var(--accent); }
+
+        /* 메인 히어로 배너 */
+        .hero {
+            height: 85vh; width: 100%;
+            background: linear-gradient(to top, var(--bg-deep) 5%, transparent 100%),
+                        linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 80%),
+                        url('https://image.tmdb.org/t/p/original/xJHokMBLzb66aTpNZGb4VxpF3N.jpg'); 
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; padding-left: 5%;
+        }
+        .hero-content { max-width: 650px; animation: fadeIn 1.5s ease-out; }
+        .hero-badge { 
+            background: rgba(255,255,255,0.1); padding: 5px 10px; 
+            border-radius: 4px; font-size: 0.8rem; color: var(--accent); 
+            border: 1px solid var(--accent); display: inline-block; margin-bottom: 15px;
+        }
+        .hero-title { font-size: 4rem; font-weight: 800; margin-bottom: 15px; line-height: 1.1; }
+        .hero-desc { font-size: 1.1rem; color: #ccc; margin-bottom: 30px; line-height: 1.6; text-shadow: 1px 1px 2px black;}
+        .btn-play {
+            padding: 14px 35px; font-size: 1.1rem; font-weight: 700; border: none; border-radius: 5px;
+            background-color: var(--accent); color: #000; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        .btn-play:hover { transform: scale(1.05); background-color: white; }
+
+        /* 슬라이더 섹션 */
+        .section { padding: 30px 0 30px 5%; margin-bottom: 20px; position: relative; }
+        .section-title { font-size: 1.5rem; margin-bottom: 20px; font-weight: 700; color: white; display: flex; align-items: center; }
+        .section-title span { width: 5px; height: 20px; background: var(--accent); margin-right: 10px; border-radius: 2px; }
+        
+        .slider-container {
+            display: flex; overflow-x: auto; gap: 15px; padding-bottom: 40px; padding-right: 5%;
+            scrollbar-width: none; scroll-behavior: smooth;
+        }
+        .slider-container::-webkit-scrollbar { display: none; }
+
+        .video-card {
+            flex: 0 0 auto; width: 220px; height: 330px;
+            background-color: var(--bg-card); border-radius: 8px;
+            overflow: hidden; cursor: pointer; position: relative;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .video-card:hover { transform: scale(1.1); z-index: 10; box-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+        .video-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: opacity 0.3s; }
+        .video-card:hover img { opacity: 1; }
+        
+        .video-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 20px 15px;
+            background: linear-gradient(to top, rgba(0,0,0,1), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .video-card:hover .video-info { opacity: 1; }
+        .video-title { font-size: 1rem; font-weight: bold; margin-bottom: 5px; color: white; }
+        .video-cate { font-size: 0.8rem; color: var(--accent); }
+
+        /* 플레이어 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9999;
+            align-items: center; justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .modal-content { width: 90%; max-width: 1100px; aspect-ratio: 16/9; background: #000; position: relative; box-shadow: 0 0 50px rgba(0,212,255,0.1); }
+        .close-btn { 
+            position: absolute; top: -50px; right: 0; 
+            font-size: 40px; color: white; cursor: pointer; transition: 0.3s; 
+        }
+        .close-btn:hover { color: var(--accent); transform: rotate(90deg); }
+        iframe, video { width: 100%; height: 100%; border: none; outline: none; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 로딩 애니메이션 */
+        #loading { text-align: center; padding: 50px; color: #666; font-size: 0.9rem; }
+
+    </style>
+</head>
+<body>
+
+    <header id="navbar">
+        <div class="logo">JINDOFLIX</div>
+        <div class="nav-menu">
+            <a href="#">홈</a>
+            <a href="#">SF / 미스터리</a>
+            <a href="#">액션</a>
+            <a href="#" onclick="alert('업로드 기능은 곧 공개됩니다!')">업로드 신청</a>
+        </div>
+    </header>
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">JINDOSTAR ORIGINAL</div>
+            <div class="hero-title"></div>
+            <div class="hero-desc">
+                "우린 답을 찾을 것이다. 늘 그랬듯이."<br>
+                황폐해진 지구를 떠나 인류의 새로운 터전을 찾아 떠나는<br>
+                쿠퍼와 브랜드 박사의 위대한 여정.
+            </div>
+            <button class="btn-play" onclick="playVideo('https://www.youtube.com/embed/zSWdZVtXT7E')">▶ 지금 재생하기</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span></span>🪐 미지의 세계: SF 컬렉션</div>
+        <div class="slider-container" id="sf-list">
+            <div id="loading">데이터 불러오는 중...</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span></span>🔥 전체 영상 목록</div>
+        <div class="slider-container" id="all-list">
+            </div>
+    </div>
+
+    <div class="modal" id="video-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <div id="player-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================
+        // [필수] 본인의 Supabase 키로 교체하세요!
+        // =================================================
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
+        // =================================================
+
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 스크롤 시 헤더 배경색 변경
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('navbar');
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        // 비디오 불러오기
+        async function loadVideos() {
+            // 1. Supabase에서 데이터 가져오기
+            const { data, error } = await client
+                .from('videos')
+                .select('*')
+                .order('created_at', { ascending: false }); // 최신순 정렬
+            
+            if (error) {
+                console.error('에러:', error);
+                document.getElementById('sf-list').innerHTML = "로딩 실패 ㅠㅠ";
+                return;
+            }
+
+            const sfList = document.getElementById('sf-list');
+            const allList = document.getElementById('all-list');
+            sfList.innerHTML = ''; // 로딩 멘트 제거
+
+            // 2. 데이터 하나씩 카드로 만들기
+            data.forEach(video => {
+                const card = createCard(video);
+                
+                // 전체 목록에 추가
+                allList.appendChild(card.cloneNode(true)); // 복사해서 추가
+
+                // SF 카테고리만 따로 추가 (대소문자 구분 없이)
+                if (video.category && video.category.toUpperCase() === 'SF') {
+                    sfList.appendChild(card);
+                }
+            });
+            
+            // 카드 클릭 이벤트 다시 연결 (cloneNode 때문)
+            reattachEvents();
+        }
+
+        function createCard(video) {
+            const div = document.createElement('div');
+            div.className = 'video-card';
+            div.dataset.url = video.video_url; // 데이터 속성에 URL 저장
+            
+            div.innerHTML = `
+                <img src="${video.thumbnail_url}" alt="${video.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+                <div class="video-info">
+                    <div class="video-title">${video.title}</div>
+                    <div class="video-cate">${video.category || 'General'}</div>
+                </div>
+            `;
+            return div;
+        }
+
+        function reattachEvents() {
+            document.querySelectorAll('.video-card').forEach(card => {
+                card.onclick = () => playVideo(card.dataset.url);
+            });
+        }
+
+        // 3. 플레이어 (유튜브 vs MP4 자동 감지)
+        function playVideo(url) {
+            const modal = document.getElementById('video-modal');
+            const container = document.getElementById('player-container');
+            container.innerHTML = ''; // 기존 영상 비우기
+
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                // 유튜브인 경우
+                let embedUrl = url;
+                if (url.includes('watch?v=')) {
+                    const videoId = url.split('v=')[1].split('&')[0];
+                    embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                }
+                container.innerHTML = `<iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            } else {
+                // MP4 파일인 경우 (Supabase Storage 등)
+                container.innerHTML = `
+                    <video controls autoplay name="media">
+                        <source src="${url}" type="video/mp4">
+                        브라우저가 비디오를 지원하지 않습니다.
+                    </video>`;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('video-modal');
+            const container = document.getElementById('player-container');
+            container.innerHTML = ''; // 영상 끄기 (소리 멈춤)
+            modal.style.display = 'none';
+        }
+
+        // 실행!
+        loadVideos();
+
+    </script>
+</body>
+</html>
