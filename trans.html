@@ -345,6 +345,9 @@
         function triggerTrap() {
             const overlay = document.getElementById('alert-overlay');
             const log = document.getElementById('trace-log');
+            const sirenAudio = new Audio('sound/dprk.wav');
+            sirenAudio.volume = 1.0;
+            sirenAudio.play();
             
             // 1. 팝업 띄우기
             overlay.style.display = 'flex';
