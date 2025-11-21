@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - Identity Forge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <style>
+        /* 🌌 [JindoStar 우주 테마] */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;       /* 네온 시안 */
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --glass-bg: rgba(20, 20, 35, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+            --hacker-green: #0f0;
+            --alert-red: #ff4f4f;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        /* 상단 네비게이션 */
+        .top-bar {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            display: flex; gap: 15px;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .top-bar a { text-decoration: none; color: var(--text-sub); }
+        .top-bar a:hover { color: var(--accent); }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 800px;
+            margin: 100px auto 50px auto;
+            padding: 0 20px;
+        }
+
+        .header-title {
+            text-align: center; margin-bottom: 40px;
+        }
+        .header-title h1 {
+            font-size: 2.5rem; color: var(--accent); margin: 0;
+            text-shadow: 0 0 20px var(--accent-glow); letter-spacing: 2px;
+        }
+        .header-title p { color: var(--text-sub); font-size: 0.9rem; margin-top: 10px; }
+
+        /* 컨트롤 패널 */
+        .control-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 20px; border-radius: 12px;
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        select, button {
+            padding: 12px 20px;
+            background: #000; border: 1px solid #333;
+            color: white; font-family: 'Pretendard', monospace;
+            border-radius: 4px; cursor: pointer; font-size: 0.9rem;
+        }
+        select:focus { border-color: var(--accent); }
+
+        button.generate-btn {
+            background: var(--accent); color: black; font-weight: bold;
+            border: none; box-shadow: 0 0 15px var(--accent-glow);
+            transition: 0.3s; flex-grow: 1; max-width: 200px;
+        }
+        button.generate-btn:hover { transform: scale(1.05); background: white; }
+
+        /* 결과 카드 */
+        .id-card {
+            background: linear-gradient(135deg, rgba(30,30,40,0.9), rgba(10,10,20,0.95));
+            border: 1px solid var(--accent);
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.1);
+            display: none; 
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .id-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom right, transparent, rgba(255,255,255,0.03), transparent);
+            transform: rotate(45deg); pointer-events: none;
+        }
+
+        .id-row {
+            display: flex; border-bottom: 1px solid #333; padding: 12px 0;
+            align-items: center;
+        }
+        .id-row:last-child { border-bottom: none; }
+        
+        .label { width: 130px; color: var(--text-sub); font-size: 0.85rem; }
+        .value { flex: 1; color: #fff; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; word-break: break-all; }
+        .value.code { font-family: 'Courier New', monospace; color: var(--hacker-green); }
+        .value.strong { color: var(--accent); }
+        .value.hell { color: var(--alert-red); text-shadow: 0 0 5px red; }
+
+        /* 프로필 사진 영역 */
+        .profile-section {
+            display: flex; gap: 20px; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 20px;
+        }
+        .avatar-box {
+            width: 80px; height: 80px; background: #000; border: 2px solid #333;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; border-radius: 8px;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 모바일 대응 */
+        @media (max-width: 600px) {
+            .control-panel { flex-direction: column; }
+            button.generate-btn { max-width: 100%; }
+            .id-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .value { font-size: 1rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="top-bar">
+        <a href="/">메인페이지</a>
+        <a href="/board.html">/b/ 익명채널</a>
+        <a href="#" style="color:var(--accent); font-weight:bold;">Identity Forge</a>
+    </nav>
+
+    <div class="container">
+        <div class="header-title">
+            <h1>IDENTITY FORGE</h1>
+            <p>가상 신원 생성기 (KOREA REGION)</p>
+        </div>
+
+        <div class="control-panel">
+            <select id="gender">
+                <option value="random">성별: 랜덤</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+            </select>
+            
+            <select id="pw-type">
+                <option value="strong">암호: 강력함 (권장)</option>
+                <option value="memorable">암호: 기억하기 쉬움</option>
+                <option value="hell">암호: 지옥 (HACKER)</option>
+            </select>
+
+            <button class="generate-btn" onclick="generateIdentity()">신원 생성 (GENERATE)</button>
+        </div>
+
+        <div id="result-area" class="id-card">
+            <div class="profile-section">
+                <div class="avatar-box" id="avatar">👾</div>
+                <div>
+                    <div style="font-size:0.8rem; color:var(--accent);">VERIFIED ID</div>
+                    <div id="full-name" style="font-size:2rem; font-weight:900;">홍길동</div>
+                </div>
+            </div>
+
+            <div class="id-row">
+                <span class="label">주민등록번호</span>
+                <span class="value code" id="rrn">900101-1xxxxxx</span>
+            </div>
+            <div class="id-row">
+                <span class="label">주소 (Address)</span>
+                <span class="value" id="address" style="font-size:0.9rem;">서울시 강남구...</span>
+            </div>
+            <div class="id-row">
+                <span class="label">전화번호</span>
+                <span class="value" id="phone">010-1234-5678</span>
+            </div>
+            <div class="id-row">
+                <span class="label">아이디 (ID)</span>
+                <span class="value code" id="username">user123</span>
+            </div>
+            <div class="id-row">
+                <span class="label">비밀번호 (PW)</span>
+                <span class="value code" id="password">pass123</span>
+            </div>
+            <div class="id-row">
+                <span class="label">이메일</span>
+                <span class="value" id="email">user@fake.com</span>
+            </div>
+            <div class="id-row">
+                <span class="label">직업</span>
+                <span class="value" id="job">해커</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // [한국 데이터 베이스]
+        const lastNames = ['김', '이', '배', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '류', '전', '홍', '고', '문', '양', '손'];
+        const firstNamesM = ['민준', '민성', '정은', '서준', '도윤', '예준', '시우', '하준', '석열', '지호', '준우', '재인', '현우', '재명', '지훈', '건우', '우진', '선우', '민재', '정일', '일성', '현준', '철수', '영호', '대철', '상혁', '준호'];
+        const firstNamesF = ['서연', '서윤', '지우', '서현', '근혜', '하은', '지민', '수빈', '하윤', '예은', '지윤', '민서', '지유', '채원', '수아', '영희', '미정', '수진', '혜진', '지은'];
+        
+        const cities = ['서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '경기도', '강원도', '제주특별자치도'];
+        const streets = ['강남대로', '테헤란로', '가산디지털로', '세종대로', '중앙로', '대학로', '평화로', '남부순환로', '서초대로', '영동대로', '올림픽로'];
+        const jobs = ['프리랜서 개발자', '정보보안 전문가', '네트워크 엔지니어', '편의점 알바', '대통령', '노예', '백수', '대학생', '주식 트레이더', '웹툰 작가', '비트코인 채굴자', '편의점 점장', '택배 기사', '유튜버'];
+
+        const adjList = ['Super', 'Happy', 'Dark', 'Fast', 'Cyber', 'Space', 'Red', 'Blue', 'Mega', 'Secret', 'Crazy', 'Angry', 'Lucky', 'Shiny'];
+        const nounList = ['Fox', 'Tiger', 'Dragon', 'Robot', 'Ninja', 'Ghost', 'Star', 'Moon', 'Hacker', 'Pizza', 'Rocket', 'Alien', 'Wolf', 'Bear'];
+
+        function rand(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function randNum(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 비밀번호 생성 함수 (핵심)
+        function generatePassword(type) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const special = "!@#$%^&*()_+";
+            
+            if (type === 'memorable') {
+                // 예: Dark-Tiger-99
+                return `${rand(adjList)}-${rand(nounList)}-${randNum(10, 99)}`;
+            } else if (type === 'hell') {
+                // 예: aB3$fG7&zQ... (24자리)
+                let pw = "";
+                const allChars = chars + special;
+                for(let i=0; i<24; i++) {
+                    pw += allChars.charAt(Math.floor(Math.random() * allChars.length));
+                }
+                return pw;
+            } else {
+                // 강력함 (기본 12자리)
+                let pw = "";
+                const allChars = chars + special;
+                for(let i=0; i<12; i++) {
+                    pw += allChars.charAt(Math.floor(Math.random() * allChars.length));
+                }
+                return pw;
+            }
+        }
+
+        function generateIdentity() {
+            const genderSelect = document.getElementById('gender').value;
+            const pwType = document.getElementById('pw-type').value; // 암호 타입 가져오기
+
+            let isMale = Math.random() > 0.5;
+            if (genderSelect === 'male') isMale = true;
+            if (genderSelect === 'female') isMale = false;
+
+            // 1. 이름
+            const lastName = rand(lastNames);
+            const firstName = isMale ? rand(firstNamesM) : rand(firstNamesF);
+            const fullName = lastName + firstName;
+
+            // 2. 주민번호 (가짜)
+            const year = randNum(70, 99); // 70~99년생
+            const month = String(randNum(1, 12)).padStart(2, '0');
+            const day = String(randNum(1, 28)).padStart(2, '0');
+            const genderDigit = isMale ? 1 : 2; // 2000년 이전 출생 기준
+            const randomBack = randNum(100000, 999999);
+            const rrn = `${year}${month}${day}-${genderDigit}${randomBack}`;
+
+            // 3. 주소
+            const address = `${rand(cities)} ${randNum(1, 99)}길 ${randNum(1, 500)} ${rand(streets)}`;
+
+            // 4. 전화번호
+            const phone = `010-${randNum(2000, 9999)}-${randNum(1000, 9999)}`;
+
+            // 5. 아이디 & 비번
+            const enName = isMale ? 'user' : 'guest'; 
+            const username = `${enName}_${randNum(100, 9999)}`;
+            const password = generatePassword(pwType); // 선택된 타입으로 생성
+
+            // 6. 이메일
+            const emailDomains = ['gmail.com', 'naver.com', 'daum.com', 'korea.kr', 'kaist.ac.kr', 'kakao.com', 'protonmail.ch'];
+            const email = `${username}@${rand(emailDomains)}`;
+
+            // [화면 표시]
+            document.getElementById('full-name').innerText = fullName;
+            document.getElementById('rrn').innerText = rrn;
+            document.getElementById('address').innerText = address;
+            document.getElementById('phone').innerText = phone;
+            document.getElementById('username').innerText = username;
+            
+            // 비밀번호 스타일 적용
+            const pwEl = document.getElementById('password');
+            pwEl.innerText = password;
+            pwEl.className = 'value code'; // 초기화
+            if (pwType === 'strong') pwEl.classList.add('strong');
+            if (pwType === 'hell') pwEl.classList.add('hell');
+
+            document.getElementById('email').innerText = email;
+            document.getElementById('job').innerText = rand(jobs);
+            document.getElementById('avatar').innerText = isMale ? '👨‍💻' : '👩‍💻';
+
+            const card = document.getElementById('result-area');
+            card.style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
