@@ -8,17 +8,14 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <style>
-        /* 🌌 [JindoStar 우주 테마 시스템] */
+        /* 🌌 [JindoStar 우주 테마] */
         :root {
             --bg-deep: #050510;
-            --accent: #00d4ff;       /* 네온 시안 (JindoFlix 통일) */
-            --accent-glow: rgba(0, 212, 255, 0.3);
-            --glass-bg: rgba(20, 20, 35, 0.6); /* 반투명 유리색 */
+            --accent: #00d4ff;       
+            --glass-bg: rgba(20, 20, 35, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #ffffff;
             --text-sub: #a4a4c5;
-            --quote-color: #a6e22e;  /* 인용구 (해커 그린) */
-            --admin-color: #ff4f6d;  /* 관리자/강조 색 */
         }
 
         * { box-sizing: border-box; }
@@ -28,7 +25,6 @@
             font-family: 'Pretendard', monospace;
             background-color: var(--bg-deep);
             color: var(--text-main);
-            /* 우주 별 배경 (JindoFlix와 동일) */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
@@ -38,139 +34,112 @@
             min-height: 100vh;
         }
 
-        a { color: var(--text-sub); text-decoration: none; transition: 0.3s; }
-        a:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
-
-        /* 상단 네비게이션 */
+        a { color: var(--text-sub); text-decoration: none; }
+        
+        /* 상단 바 */
         .top-bar {
-            padding: 15px 20px;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.9rem;
-            display: flex; gap: 15px;
-            position: fixed; top: 0; width: 100%; z-index: 100;
-        }
-        .top-bar a.active { color: var(--accent); font-weight: bold; }
-
-        /* 메인 컨테이너 */
-        .container {
-            max-width: 900px;
-            margin: 80px auto 40px auto; /* 헤더 높이만큼 띄움 */
-            padding: 0 15px;
+            padding: 15px 20px; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border); font-size: 0.9rem;
+            display: flex; gap: 15px; position: fixed; top: 0; width: 100%; z-index: 100;
         }
 
-        /* 타이틀 섹션 */
-        .board-header { text-align: center; margin-bottom: 40px; }
-        .board-title {
-            font-size: 2.5rem; font-weight: 900; color: var(--accent);
-            text-shadow: 0 0 20px var(--accent-glow);
-            letter-spacing: 2px; margin: 0;
-        }
-        .board-subtitle { color: var(--text-sub); font-size: 0.9rem; margin-top: 5px; }
+        .container { max-width: 1200px; margin: 80px auto 40px auto; padding: 0 15px; }
 
-        /* ✨ 글쓰기 폼 (유리 패널 스타일) */
+        /* 글쓰기 폼 */
         .post-form {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-            margin-bottom: 50px;
-            transition: 0.3s;
+            background: var(--glass-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 20px; margin-bottom: 40px; max-width: 800px; margin-left: auto; margin-right: auto;
         }
-        .post-form:focus-within { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
-
-        .form-group { margin-bottom: 15px; }
-        .form-row { display: flex; gap: 10px; }
         
-        /* 인풋 스타일 (터미널 느낌) */
-        input, textarea {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid #333;
-            border-radius: 4px;
-            color: white;
-            padding: 10px;
-            font-family: 'Pretendard', monospace;
-            font-size: 0.95rem;
-            outline: none; transition: 0.3s;
+        input[type="text"], input[type="password"], textarea {
+            width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid #333; border-radius: 4px;
+            color: white; padding: 10px; font-family: 'Pretendard', monospace; outline: none;
         }
-        input:focus, textarea:focus { border-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
-        textarea { resize: vertical; height: 80px; }
-        ::placeholder { color: #555; }
-
+        input:focus, textarea:focus { border-color: var(--accent); }
+        
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        
         /* 파일 업로드 버튼 커스텀 */
-        input[type="file"] { padding: 5px; font-size: 0.8rem; }
+        .file-upload-box {
+            flex: 2; display: flex; align-items: center; background: rgba(0,0,0,0.3);
+            border: 1px solid #333; border-radius: 4px; padding: 5px;
+        }
+        .file-btn {
+            background: #333; color: #ccc; padding: 8px 15px; border-radius: 4px;
+            cursor: pointer; font-size: 0.9rem; border: 1px solid #555; margin-right: 10px; white-space: nowrap;
+        }
+        .file-btn:hover { background: #555; color: white; border-color: var(--accent); }
+        .file-name { color: #666; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* 전송 버튼 */
         .btn-submit {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(45deg, var(--accent), #0066ff);
-            color: white; border: none; border-radius: 6px;
-            font-weight: 700; font-size: 1rem; cursor: pointer;
-            transition: 0.3s;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            flex: 1; padding: 12px; background: linear-gradient(45deg, var(--accent), #0066ff);
+            color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; white-space: nowrap;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--accent-glow); }
 
-        /* 🧵 게시글 목록 (스레드) */
-        .thread {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
+        /* 카드형 리스트 */
+        #thread-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;
+        }
+
+        .thread-card {
+            background: rgba(30, 30, 40, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px; overflow: hidden; transition: 0.3s; cursor: pointer;
+            display: flex; flex-direction: column; height: 350px;
+        }
+        .thread-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0, 212, 255, 0.2); border-color: var(--accent); }
+
+        .card-thumb { width: 100%; height: 180px; object-fit: cover; background: #000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .no-image-thumb {
+            width: 100%; height: 180px; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3); color: #444; font-size: 0.8rem;
+        }
+
+        .card-content { padding: 15px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { font-size: 0.75rem; color: var(--text-sub); margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .card-preview { font-size: 0.85rem; color: #aaa; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+        /* 📌 상세 보기 모달 (팝업) */
+        .post-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 200;
+            overflow-y: auto; padding: 20px; backdrop-filter: blur(5px);
+        }
+        .modal-container {
+            max-width: 800px; margin: 50px auto;
+            background: #16161e; border: 1px solid var(--accent);
+            border-radius: 10px; box-shadow: 0 0 50px rgba(0,212,255,0.1);
+            display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* 작성자 헤더 */
-        .post-meta { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 10px; display: flex; gap: 10px; align-items: center;}
-        .post-meta .name { color: var(--accent); font-weight: bold; }
-        .post-meta .subject { color: #fff; font-weight: 700; font-size: 1rem; }
-        .post-meta .id { font-family: monospace; color: #666; }
-        .post-no { cursor: pointer; color: #fff; }
-        .post-no:hover { color: var(--admin-color); }
-
-        /* 본문 레이아웃 */
-        .post-body { display: flex; gap: 20px; align-items: flex-start; }
+        /* 모달 헤더/본문/푸터 분리 */
+        .modal-body { padding: 30px; }
+        .modal-close { float: right; font-size: 2rem; cursor: pointer; color: #fff; margin-top: -10px; }
         
-        /* 이미지 */
-        .post-img-wrap { flex-shrink: 0; }
-        .post-thumb {
-            max-width: 200px; max-height: 200px;
-            border-radius: 4px; border: 1px solid #333;
-            cursor: pointer; transition: 0.3s;
+        /* [NEW] 모달 하단 (댓글입력 + 삭제버튼) */
+        .modal-footer {
+            background: #111;
+            border-top: 1px solid #333;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 양끝 정렬 */
+            gap: 20px;
         }
-        .post-thumb:hover { border-color: var(--accent); }
         
-        /* 텍스트 내용 */
-        .post-text { 
-            flex-grow: 1; white-space: pre-wrap; line-height: 1.6; color: #eee; font-size: 0.95rem; 
+        .reply-input-area { display: flex; flex: 1; gap: 10px; }
+        .reply-btn { background: var(--accent); border: none; padding: 0 20px; color: black; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        
+        .delete-btn {
+            background: transparent; border: 1px solid #ff4f4f; color: #ff4f4f;
+            padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+            white-space: nowrap; transition: 0.3s;
         }
-        .greentext { color: var(--quote-color); } /* > 인용구 색상 */
+        .delete-btn:hover { background: #ff4f4f; color: white; }
 
-        /* 💬 답글 (Reply) */
-        .reply-box {
-            margin-top: 15px;
-            margin-left: 20px;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border-left: 3px solid #333;
-            border-radius: 0 6px 6px 0;
-        }
-        .reply-box:hover { border-left-color: var(--accent); background: rgba(255, 255, 255, 0.05); }
-
-        /* 모바일 최적화 */
-        @media (max-width: 600px) {
-            .post-body { flex-direction: column; }
-            .post-thumb { max-width: 150px; }
-            .form-row { flex-direction: column; gap: 10px; }
-        }
-
-        /* 로딩 애니메이션 */
-        .loading { text-align: center; color: var(--accent); font-family: monospace; animation: blink 1s infinite; }
+        .greentext { color: #a6e22e; }
+        .loading { text-align: center; color: var(--accent); animation: blink 1s infinite; width: 100%; grid-column: 1 / -1; }
         @keyframes blink { 50% { opacity: 0.3; } }
 
     </style>
@@ -178,15 +147,14 @@
 <body>
 
     <nav class="top-bar">
-        <a href="/">JINDOFLIX</a>
-        <a href="/board.html" class="active">/b/ 익명채널</a>
-        <a href="#" onclick="alert('준비중')">/hack/ 정보</a>
+        <a href="/">메인 페이지</a>
+        <a href="/board.html" style="color:var(--accent); font-weight:bold;">/b/ 익명채널</a>
     </nav>
 
     <div class="container">
-        <div class="board-header">
-            <h1 class="board-title">/BOARD/</h1>
-            <div class="board-subtitle">Anonymous Communication Uplink established.</div>
+        <div style="text-align:center; margin-bottom:40px;">
+            <h1 style="margin:0; color:var(--accent); font-size:2.5rem; letter-spacing:2px;">/BOARD/</h1>
+            <div style="color:#666; font-size:0.9rem;">Anonymous Image Board v3.2</div>
         </div>
 
         <div class="post-form">
@@ -194,20 +162,44 @@
                 <input type="text" id="input-name" placeholder="닉네임 (비우면 익명)" style="flex: 1;">
                 <input type="password" id="input-password" placeholder="삭제 비밀번호 (필수)" style="flex: 1;">
             </div>
-            <div class="form-group" style="margin-top:10px;">
+            <div class="form-row">
                 <input type="text" id="input-subject" placeholder="제목 (선택사항)">
             </div>
-            <div class="form-group">
-                <textarea id="input-comment" placeholder="내용을 입력하세요... ( > 로 시작하면 초록색이 됩니다)"></textarea>
+            <div class="form-row">
+                <textarea id="input-comment" placeholder="내용을 입력하세요..."></textarea>
             </div>
-            <div class="form-row" style="align-items: center;">
-                <input type="file" id="input-file" style="flex: 2;">
+            <div class="form-row" style="align-items: stretch;">
+                <div class="file-upload-box">
+                    <input type="file" id="input-file" style="display: none;" onchange="updateFileName()">
+                    <label for="input-file" class="file-btn">📁 파일 선택</label>
+                    <span id="file-name" class="file-name">No File Selected</span>
+                </div>
                 <button class="btn-submit" onclick="submitPost()">전송 (UPLOAD)</button>
             </div>
         </div>
 
         <div id="thread-list">
-            <div class="loading">/// RECEIVING DATA FROM DEEP SPACE... ///</div>
+            <div class="loading">/// RECEIVING DATA... ///</div>
+        </div>
+    </div>
+
+    <div id="post-modal" class="post-modal" onclick="closeModal(event)">
+        <div class="modal-container">
+            
+            <div class="modal-body">
+                <span class="modal-close" onclick="document.getElementById('post-modal').style.display='none'">&times;</span>
+                <div id="modal-content"></div>
+                <div id="modal-replies"></div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="reply-input-area">
+                    <input type="text" id="reply-input" placeholder="익명 댓글 달기...">
+                    <button class="reply-btn" onclick="submitReply()">등록</button>
+                </div>
+                <button class="delete-btn" id="modal-delete-btn">🗑️ 삭제</button>
+            </div>
+
         </div>
     </div>
 
@@ -219,7 +211,18 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 게시글 불러오기
+        function updateFileName() {
+            const fileInput = document.getElementById('input-file');
+            const fileNameSpan = document.getElementById('file-name');
+            if (fileInput.files.length > 0) {
+                fileNameSpan.textContent = fileInput.files[0].name;
+                fileNameSpan.style.color = 'var(--accent)';
+            } else {
+                fileNameSpan.textContent = 'No File Selected';
+                fileNameSpan.style.color = '#666';
+            }
+        }
+
         async function loadPosts() {
             const { data, error } = await client
                 .from('board_posts')
@@ -227,82 +230,115 @@
                 .order('created_at', { ascending: false });
 
             const list = document.getElementById('thread-list');
-            list.innerHTML = ''; // 로딩 메시지 제거
+            list.innerHTML = '';
 
-            if (error) {
-                list.innerHTML = `<div style="text-align:center; color:red;">신호 수신 실패: ${error.message}</div>`;
-                return;
-            }
+            if (error) return list.innerHTML = `<div style="color:red; text-align:center;">로딩 실패</div>`;
 
-            // 스레드(원글) 렌더링
+            window.allPosts = data;
+
             data.forEach(post => {
                 if (post.parent_id === null) {
-                    const thread = document.createElement('div');
-                    thread.className = 'thread';
+                    const card = document.createElement('div');
+                    card.className = 'thread-card';
+                    card.onclick = () => openModal(post.id);
+
+                    let thumbHtml = post.image_url 
+                        ? `<img src="${post.image_url}" class="card-thumb">` 
+                        : `<div class="no-image-thumb">NO IMAGE</div>`;
                     
-                    // 이미지
-                    let imgHtml = '';
-                    if (post.image_url) {
-                        imgHtml = `
-                            <div class="post-img-wrap">
-                                <img src="${post.image_url}" class="post-thumb" onclick="toggleImage(this)">
-                            </div>`;
-                    }
-
-                    // 내용 (그린텍스트 처리)
-                    let contentHtml = post.content
-                        .replace(/</g, "&lt;") // XSS 방지
-                        .replace(/^>(.*)$/gm, '<span class="greentext">>$1</span>');
-
-                    thread.innerHTML = `
-                        <div class="post-meta">
-                            <span class="subject">${post.subject || '무제'}</span>
-                            <span class="name">${post.name || 'Anonymous'}</span>
-                            <span class="id">${new Date(post.created_at).toLocaleString()}</span>
-                            <span class="post-no" onclick="addReplyLink(${post.id})">No.${post.id}</span>
-                            <a href="#" style="font-size:0.8rem;" onclick="addReplyLink(${post.id}); return false;">[답글]</a>
+                    card.innerHTML = `
+                        ${thumbHtml}
+                        <div class="card-content">
+                            <div class="card-title">${post.subject || '무제'}</div>
+                            <div class="card-meta">
+                                <span>${post.name || 'Anonymous'}</span>
+                                <span>${new Date(post.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div class="card-preview">${post.content}</div>
                         </div>
-                        <div class="post-body">
-                            ${imgHtml}
-                            <div class="post-text">${contentHtml}</div>
-                        </div>
-                        <div id="replies-${post.id}" style="margin-top:10px;"></div>
                     `;
-                    list.appendChild(thread);
-                }
-            });
-
-            // 댓글(Reply) 렌더링
-            data.forEach(post => {
-                if (post.parent_id !== null) {
-                    const parentDiv = document.getElementById(`replies-${post.parent_id}`);
-                    if (parentDiv) {
-                        const reply = document.createElement('div');
-                        reply.className = 'reply-box';
-                        
-                        let imgHtml = post.image_url ? `<div style="margin-bottom:5px;"><a href="${post.image_url}" target="_blank" style="color:#00d4ff;">[이미지 첨부]</a></div>` : '';
-                        let contentHtml = post.content
-                            .replace(/</g, "&lt;")
-                            .replace(/^>(.*)$/gm, '<span class="greentext">>$1</span>');
-
-                        reply.innerHTML = `
-                            <div class="post-meta">
-                                <span class="name">${post.name || 'Anonymous'}</span>
-                                <span class="id">${new Date(post.created_at).toLocaleString()}</span>
-                                <span class="post-no">No.${post.id}</span>
-                            </div>
-                            <div class="post-text">
-                                ${imgHtml}
-                                ${contentHtml}
-                            </div>
-                        `;
-                        parentDiv.appendChild(reply);
-                    }
+                    list.appendChild(card);
                 }
             });
         }
 
-        // 글쓰기
+        // [최종] 모달 열기
+        function openModal(postId) {
+            const post = window.allPosts.find(p => p.id === postId);
+            if (!post) return;
+            
+            window.currentPostId = postId;
+            const contentDiv = document.getElementById('modal-content');
+            const repliesDiv = document.getElementById('modal-replies');
+            
+            // 1. 본문 렌더링
+            let mainImgHtml = '';
+            if (post.image_url) {
+                mainImgHtml = `<a href="${post.image_url}" target="_blank">
+                    <img src="${post.image_url}" style="max-width:100%; margin-bottom:15px; border-radius:5px; border:1px solid #333;">
+                </a>`;
+            }
+            let contentHtml = post.content.replace(/^>(.*)$/gm, '<span class="greentext">>$1</span>');
+
+            contentDiv.innerHTML = `
+                <h2 style="color:var(--accent); margin-top:0;">${post.subject || '무제'}</h2>
+                <div style="color:#666; font-size:0.8rem; margin-bottom:15px;">No.${post.id} | ${post.name} | ${new Date(post.created_at).toLocaleString()}</div>
+                ${mainImgHtml}
+                <div style="white-space:pre-wrap; line-height:1.6; font-size:1rem; margin-bottom:30px;">${contentHtml}</div>
+            `;
+
+            // 2. 댓글 렌더링
+            const replies = window.allPosts
+                .filter(p => p.parent_id === postId)
+                .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+            let repliesHtml = '<h4 style="margin:0 0 15px 0; color:#888; border-top:1px solid #333; padding-top:15px;">댓글</h4>';
+            replies.forEach(reply => {
+                let replyImg = reply.image_url ? `<br><a href="${reply.image_url}" target="_blank"><img src="${reply.image_url}" style="max-width:150px; margin-top:5px; border-radius:4px;"></a>` : '';
+                repliesHtml += `
+                    <div style="background:#222; padding:12px; margin-bottom:10px; border-radius:6px; border-left:3px solid #444;">
+                        <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">
+                            <span style="color:var(--accent); font-weight:bold;">${reply.name}</span>
+                            ${new Date(reply.created_at).toLocaleString()}
+                        </div>
+                        <div style="color:#ddd;">${reply.content} ${replyImg}</div>
+                    </div>
+                `;
+            });
+            repliesDiv.innerHTML = repliesHtml;
+
+            // 3. 삭제 버튼에 기능 연결 (비밀번호 전달)
+            const deleteBtn = document.getElementById('modal-delete-btn');
+            deleteBtn.onclick = () => deletePost(post.password);
+
+            // 모달 표시
+            document.getElementById('post-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function deletePost(realPassword) {
+            const inputPw = prompt("글 작성 시 입력했던 비밀번호를 입력하세요:");
+            if (!inputPw) return;
+
+            if (inputPw === realPassword) {
+                const { error } = await client.from('board_posts').delete().eq('id', window.currentPostId);
+                if (error) alert("삭제 실패: " + error.message);
+                else {
+                    alert("삭제되었습니다.");
+                    location.reload();
+                }
+            } else {
+                alert("비밀번호가 틀렸습니다!");
+            }
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'post-modal') {
+                document.getElementById('post-modal').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
         async function submitPost() {
             const name = document.getElementById('input-name').value;
             const subject = document.getElementById('input-subject').value;
@@ -310,78 +346,52 @@
             const password = document.getElementById('input-password').value;
             const fileInput = document.getElementById('input-file');
 
-            if (!content && !fileInput.files.length) {
-                alert("내용이나 이미지는 필수입니다.");
-                return;
-            }
-            if (!password) {
-                alert("삭제를 위해 비밀번호를 입력해주세요.");
-                return;
-            }
+            if (!content && !fileInput.files.length) return alert("내용이나 이미지를 입력하세요.");
+            if (!password) return alert("비밀번호는 필수입니다.");
 
             let imageUrl = null;
-
-            // 1. 이미지 업로드
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-                
-                const { data, error } = await client.storage
-                    .from('board_images') // 버킷 이름 확인!
-                    .upload(fileName, file);
-                
-                if (error) {
-                    alert("이미지 업로드 실패: " + error.message);
-                    return;
-                }
-                
-                const { data: urlData } = client.storage.from('board_images').getPublicUrl(fileName);
-                imageUrl = urlData.publicUrl;
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2,9)}.${file.name.split('.').pop()}`;
+                const { error } = await client.storage.from('board_images').upload(fileName, file);
+                if (error) return alert("이미지 업로드 실패: " + error.message);
+                imageUrl = client.storage.from('board_images').getPublicUrl(fileName).data.publicUrl;
             }
 
-            // 2. DB 저장
-            const { error } = await client
-                .from('board_posts')
-                .insert({
-                    name: name || 'Anonymous',
-                    subject: subject,
-                    content: content,
-                    password: password,
-                    image_url: imageUrl,
-                    parent_id: window.replyTargetId || null
-                });
+            const { error } = await client.from('board_posts').insert({
+                name: name || 'Anonymous',
+                subject: subject,
+                content: content,
+                password: password,
+                image_url: imageUrl,
+                parent_id: null
+            });
 
-            if (error) {
-                alert("글쓰기 실패: " + error.message);
-            } else {
-                location.reload();
-            }
+            if (error) alert("업로드 실패: " + error.message);
+            else location.reload();
         }
 
-        // 이미지 클릭시 확대/축소
-        function toggleImage(img) {
-            if (img.style.maxWidth === '100%') {
-                img.style.maxWidth = '200px';
-                img.style.maxHeight = '200px';
-            } else {
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '100%';
-            }
-        }
+        async function submitReply() {
+            const content = document.getElementById('reply-input').value;
+            if(!content) return;
+            
+            const { error } = await client.from('board_posts').insert({
+                parent_id: window.currentPostId,
+                content: content,
+                name: 'Anonymous',
+                password: 'reply'
+            });
 
-        // 답글 모드
-        function addReplyLink(id) {
-            window.replyTargetId = id;
-            const textarea = document.getElementById('input-comment');
-            textarea.value = `>>${id}\n` + textarea.value;
-            textarea.focus();
-            window.scrollTo(0,0);
-            document.querySelector('.btn-submit').innerText = `No.${id}에 답글 작성 중...`;
+            if(!error) {
+                document.getElementById('reply-input').value = '';
+                await loadPosts(); 
+                openModal(window.currentPostId);
+            } else {
+                alert("댓글 실패");
+            }
         }
 
         loadPosts();
     </script>
-
 </body>
 </html>
