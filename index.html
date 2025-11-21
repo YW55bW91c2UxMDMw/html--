@@ -175,7 +175,7 @@
 
             <a href="chat.html" class="link-card">
                 <img src="img/rumi_chat.png" alt="루미 채팅">
-                <div class="link-text">3
+                <div class="link-text">S
                     <span class="link-title">익명 채팅</span>
                     <span class="link-desc">익명 자유 채팅</span>
                 </div>
@@ -189,12 +189,46 @@
                 </div>
             </a>
 
+            <a href="#" onclick="goRandomPage(); return false;" class="link-card">
+                <img src="img/rumi_random.png" alt="랜덤 워프">
+                <div class="link-text">
+                    <span class="link-title">I'm Feeling Foxy!</span>
+                    <span class="link-desc">운명에 맡기기 (랜덤 이동)</span>
+                </div>
+            </a>
+
             </div>
 
         <p style="margin-top: 50px; color: #666; font-size: 0.8rem;">
             © 2025 JINDOSTAR Corp. All rights reserved.
         </p>
     </div>
+<script>
+    function goRandomPage() {
+        const pages = [
+            'board.html',
+            'software.html',
+            'chat.html',
+            'dansen.html',
+            'cal.html',
+            'mad.html',
+            'trans.html',
+            'video.html',
+            '연습/연습.html',
+            '연습/연습1.html',
+            '연습/연습2.html',
+            '연습/연습3.html',
+            '연습/연습4.html',
+        ];
 
+        // 2. 주사위 굴리기 (랜덤 선택)
+        const randomIndex = Math.floor(Math.random() * pages.length);
+        const targetPage = pages[randomIndex];
+
+        // 3. 이동 (약간의 재미를 위해 콘솔에 로그 찍음)
+        console.log(`🎲 주사위 결과: ${targetPage} 로 이동합니다!`);
+        window.location.href = targetPage;
+    }
+</script>
 </body>
 </html>
