@@ -2,161 +2,199 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <title>JINDOSTAR UNIVERSE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="개발, 해킹, 그리고 익명 채팅. 진도스타의 비밀 연구소입니다.">
-    <meta property="og:title" content="Jindostar - 익명 채팅 & 개발 블로그">
-    <meta property="og:description" content="PHP 없이 Supabase로 만든 실시간 익명 채팅방에 접속하세요.">
+    <meta name="description" content="진도스타의 사이버 스페이스 - JINDOFLIX, 익명 게시판, 그리고 더 많은 것들.">
+    
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <meta property="og:image" content="https://jindostar.com/img/sausage.jpg">
-    <title>jindostar project 메인 페이지</title>
+
     <style>
+        /* 🌌 [JindoStar 우주 테마 시스템] (다른 페이지와 통일) */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;       /* 네온 시안 */
+            --accent-glow: rgba(0, 212, 255, 0.5);
+            --glass-bg: rgba(20, 20, 35, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #000022; /* 어두운 우주 느낌 */
-            color: #ffffff;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 별 배경 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .wrapper {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 32px 16px 64px;
-        }
-
-        header {
+        /* 메인 컨테이너 (중앙 정렬) */
+        .landing-container {
             text-align: center;
-            margin-bottom: 32px;
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+            
+            /* 글래스모피즘 효과 */
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-out;
         }
 
-        header img {
-            display: block;
-            margin: 16px auto 8px;
-            width: 200px;
-            height: 200px;
+        /* 타이틀 */
+        .main-title {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 25px var(--accent-glow);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
         }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
-        header p {
-            margin: 8px 0 0;
-            font-size: 0.95rem;
-            color: #ccccff;
-        }
-
-        nav.main-nav {
-            margin: 32px 0;
-            padding: 16px;
-            border: 1px solid #4455aa;
-            border-radius: 8px;
-            background-color: #000033;
-        }
-
-        nav.main-nav h2 {
-            margin-top: 0;
+        .sub-title {
+            color: var(--text-sub);
             font-size: 1.1rem;
+            margin-bottom: 50px;
         }
 
-        nav.main-nav ul {
-            list-style: none;
-            padding-left: 0;
-            margin: 8px 0 0;
+        /* 링크 카드 컨테이너 (그리드) */
+        .link-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 반응형 그리드 */
+            gap: 25px;
+            justify-content: center;
         }
 
-        nav.main-nav li {
-            margin: 6px 0;
-        }
-
-        nav.main-nav a {
-            color: #99ccff;
+        /* 링크 카드 버튼 디자인 */
+        .link-card {
+            display: flex;
+            align-items: center;
             text-decoration: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
         }
 
-        nav.main-nav a:hover {
-            text-decoration: underline;
+        /* 마우스 올렸을 때 효과 */
+        .link-card:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
+            transform: translateY(-5px);
         }
 
-        .terminal-link {
-            margin: 24px 0;
-            text-align: center;
+        /* 루미 이미지 스타일 */
+        .link-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-right: 20px;
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+        .link-card:hover img {
+            border-color: var(--accent);
+            transform: scale(1.05);
         }
 
-        .terminal-link a {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: 1px solid #66ccff;
-            color: #66ccff;
-            text-decoration: none;
-            font-size: 0.95rem;
+        /* 텍스트 스타일 */
+        .link-text {
+            text-align: left;
+        }
+        .link-title {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+        .link-desc {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+        .link-card:hover .link-title {
+            color: var(--accent);
         }
 
-        .terminal-link a:hover {
-            background-color: #001133;
+        /* 등장 애니메이션 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        footer {
-            margin-top: 40px;
-            border-top: 1px solid #333366;
-            padding-top: 16px;
-            font-size: 0.85rem;
-            color: #bbbbbb;
-        }
-
-        footer nav a {
-            color: #99ccff;
-            text-decoration: none;
-        }
-
-        footer nav a:hover {
-            text-decoration: underline;
-        }
-
-        footer p {
-            margin: 8px 0 0;
-            line-height: 1.4;
+        /* 모바일 최적화 */
+        @media (max-width: 600px) {
+            .main-title { font-size: 2.2rem; }
+            .link-card { padding: 12px; }
+            .link-card img { width: 60px; height: 60px; margin-right: 15px; }
+            .link-title { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-<div class="wrapper">
-    <header>
-        <h1>jindostar project의 대문에 오신 걸 환영합니다</h1>
-        <img src="img/jindostar.png" alt="jindostar 로고">
-        <p>루미가 운영하는 작은 우주 실험실 · BBS · 토큰 프로젝트 허브</p>
-    </header>
 
-    <nav class="main-nav">
-        <h2>메인 메뉴</h2>
-        <ul>
-            <li><a href="board.html">자유 게시판</a></li>
-            <li><a href="video.html">JINDOFLIX 바로가기</a></li>
-            <li><a href="index_of/index.html">저장소 바로가기</a></li>
-            <li><a href="chat.html">익명 자유 채팅</a></li>
-            <li><a href="연습/연습1.html">연습용 페이지</a></li>
-            <li><a href="trans.html">바른 말 교정기</a></li>
-        </ul>
-    </nav>
+    <div class="landing-container">
+        <h1 class="main-title">JINDOSTAR</h1>
+        <p class="sub-title">익명과 자유의 사이버 스페이스에 오신 것을 환영합니다.</p>
 
-    <div class="terminal-link">
-        <a href="404.html">▶ 터미널 모드로 접속하기</a>
+        <div class="link-container">
+            <a href="video.html" class="link-card">
+                <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스"S>
+                <div class="link-text">
+                    <span class="link-title">JINDOFLIX</span>
+                    <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
+                </div>
+            </a>
+
+            <a href="board.html" class="link-card">
+                <img src="img/rumi_board.png" alt="루미 게시판">
+                <div class="link-text">
+                    <span class="link-title">익명 게시판 /b/</span>
+                    <span class="link-desc">추적 불가능한 자유 공간</span>
+                </div>
+            </a>
+
+            <a href="chat.html" class="link-card">
+                <img src="img/rumi_chat.png" alt="루미 채팅">
+                <div class="link-text">3
+                    <span class="link-title">익명 채팅</span>
+                    <span class="link-desc">익명 자유 채팅</span>
+                </div>
+            </a>
+
+            <a href="trans.html" class="link-card">
+                <img src="img/rumi_dprk.png" alt="바른 말 교정기">
+                <div class="link-text">
+                    <span class="link-title">바른 말 교정기</span>
+                    <span class="link-desc">아름다운 우리 말</span>
+                </div>
+            </a>
+
+            </div>
+
+        <p style="margin-top: 50px; color: #666; font-size: 0.8rem;">
+            © 2023 JINDOSTAR Corp. All rights reserved.
+        </p>
     </div>
 
-    <footer>
-        <nav>
-            <a href="https://github.com/YW55bW91c2UxMDMw" target="_blank" rel="noopener noreferrer">Github</a> |
-            <a href="http://rumilwiuavvvqqt4ybvgvi7tyo4hjl5xgfuvpdf6otjiycgwqbym2qad.onion/"
-               target="_blank" rel="noopener noreferrer">Hidden site (.onion)</a>
-        </nav>
-        <p>
-            <span>관리자: 루미</span><br>
-            <span>이메일: msbae1@protonmail.ch</span><br>
-            <span>Copyright 2025. Rumi. All Rights Reserved.</span>
-        </p>
-    </footer>
-</div>
 </body>
 </html>
