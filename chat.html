@@ -2,211 +2,421 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>spin</title>
+    <title>JINDOSTAR - Deep Space Network</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* 기존 디자인(CSS) 그대로 유지 */
+        /* 🌌 [Galaxy Interface Theme] */
         :root {
-            --bg-main: #050510;
-            --bg-card: #101020;
-            --bg-input: #151528;
-            --accent: #ff4f6d;
-            --accent-soft: rgba(255, 79, 109, 0.15);
-            --text-main: #f5f5f5;
-            --text-muted: #a4a4c5;
-            --border-soft: #262648;
+            --bg-deep: #050510;
+            --accent: #00f2ff;
+            --accent-warn: #ff0055;
+            --glass-panel: rgba(20, 30, 50, 0.75);
+            --glass-border: rgba(100, 200, 255, 0.15);
+            --text-main: #ffffff;
+            --text-muted: #8899ac;
         }
+
         * { box-sizing: border-box; }
         body {
-            margin: 0; min-height: 100vh;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #201840 0, #050510 55%, #020208 100%);
-            color: var(--text-main);
-            display: flex; justify-content: center; align-items: center; padding: 16px;
+            margin: 0; padding: 0; font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep); color: var(--text-main);
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
-        #chat-shell {
-            width: 100%; max-width: 680px; height: 80vh; max-height: 720px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(0,0,0,0.7));
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
-            display: flex; flex-direction: column; overflow: hidden;
-            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+
+        /* 배경 별 */
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+        .stars::after {
+            content: " "; position: absolute; top: 0; left: 0; width: 1px; height: 1px; background: transparent;
+            box-shadow: 10vw 10vh #fff, 25vw 40vh #fff, 50vw 80vh #fff, 75vw 20vh #fff, 90vw 90vh #fff;
+            animation: star-move 120s linear infinite;
         }
-        #chat-header {
-            padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
-            display: flex; align-items: center; justify-content: space-between; gap: 12px;
-            background: radial-gradient(circle at top left, rgba(255,79,109,0.15), transparent 55%);
+        @keyframes star-move { from { transform: translateY(0); } to { transform: translateY(-100vh); } }
+
+        /* 공통 UI 컴포넌트 */
+        button { cursor: pointer; font-family: inherit; }
+        input, textarea {
+            background: rgba(0,0,0,0.4); border: 1px solid #445566; color: white;
+            border-radius: 8px; padding: 12px; width: 100%; outline: none; transition: 0.3s;
         }
-        #chat-header-left { display: flex; align-items: center; gap: 12px; }
-        #chat-title { font-weight: 600; font-size: 1rem; }
-        #chat-subtitle { font-size: 0.78rem; color: var(--text-muted); }
-        .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #35d48b; box-shadow: 0 0 8px #35d48b; }
-        #chat-header-right { font-size: 0.75rem; color: var(--text-muted); }
-        #message-list {
-            flex: 1; padding: 14px 18px; overflow-y: auto;
-            background: radial-gradient(circle at top right, rgba(255,79,109,0.06), transparent 55%);
+        input:focus, textarea:focus { border-color: var(--accent); }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00c3ff, #006eff); border: none;
+            color: white; font-weight: bold; padding: 12px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 110, 255, 0.3);
         }
-        .message-item {
-            margin-bottom: 10px; padding: 8px 10px; border-radius: 10px;
-            border: 1px solid var(--border-soft); background: rgba(7, 7, 18, 0.96);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.45); max-width: 80%; word-wrap: break-word;
+        .btn-primary:hover { transform: translateY(-2px); }
+
+        .btn-danger {
+            background: rgba(255, 0, 85, 0.2); border: 1px solid var(--accent-warn);
+            color: var(--accent-warn); padding: 8px 15px; border-radius: 6px; font-size: 0.8rem;
         }
-        .message-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
-        .message-username { font-size: 0.82rem; font-weight: 600; color: var(--accent); }
-        .message-time { font-size: 0.7rem; color: var(--text-muted); }
-        .message-body { font-size: 0.86rem; color: var(--text-main); }
-        #input-area {
-            padding: 10px 10px 12px; border-top: 1px solid rgba(255,255,255,0.08);
-            background: linear-gradient(180deg, rgba(5,5,18,0.85), rgba(2,2,8,0.95));
-            display: flex; flex-direction: column; gap: 7px;
+        .btn-danger:hover { background: var(--accent-warn); color: white; }
+
+        /* 1. 로비 (채널 목록) */
+        #lobby-view { flex: 1; padding: 20px; overflow-y: auto; max-width: 800px; margin: 0 auto; width: 100%; }
+        
+        .header-box {
+            text-align: center; margin-bottom: 30px; padding: 40px 20px;
+            background: var(--glass-panel); border-radius: 20px; border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
         }
-        #top-input-row { display: flex; gap: 8px; }
-        #username-input {
-            width: 110px; padding: 7px 9px; border-radius: 999px; border: 1px solid var(--border-soft);
-            background: var(--bg-input); color: var(--text-main); font-size: 0.8rem; outline: none;
+        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        
+        .channel-card {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            padding: 20px; border-radius: 12px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
         }
-        #username-input::placeholder { color: var(--text-muted); }
-        #message-input-row { display: flex; gap: 8px; }
-        #message-input {
-            flex: 1; padding: 9px 11px; border-radius: 999px; border: 1px solid var(--border-soft);
-            background: var(--bg-input); color: var(--text-main); font-size: 0.86rem; outline: none;
+        .channel-card:hover { background: rgba(255,255,255,0.07); border-color: var(--accent); }
+        .channel-card h3 { margin: 0 0 10px 0; color: var(--accent); }
+        .channel-card p { font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.4; height: 40px; overflow: hidden; }
+        .badge-private {
+            position: absolute; top: 10px; right: 10px; font-size: 0.7rem; 
+            background: #333; color: #aaa; padding: 2px 6px; border-radius: 4px;
         }
-        #message-input::placeholder { color: var(--text-muted); }
-        #send-button {
-            padding: 0 16px; border-radius: 999px; border: none;
-            background: linear-gradient(135deg, var(--accent), #ff8b4f);
-            color: #fff; font-weight: 600; font-size: 0.86rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 4px;
-            box-shadow: 0 6px 14px rgba(255,79,109,0.45);
-            transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.06s ease;
+
+        /* 2. 모달 (채널 생성/입장) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 200; display: none;
+            align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
-        #send-button:hover { filter: brightness(1.05); box-shadow: 0 8px 18px rgba(255,79,109,0.6); }
-        #send-button:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(255,79,109,0.4); }
-        #footer-note { text-align: right; font-size: 0.7rem; color: var(--text-muted); padding: 0 14px 4px; }
-        #message-list::-webkit-scrollbar { width: 6px; }
-        #message-list::-webkit-scrollbar-track { background: transparent; }
-        #message-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
-        @media (max-width: 480px) {
-            #chat-shell { height: 85vh; max-height: none; }
-            #username-input { width: 90px; }
+        .modal-box {
+            background: #111620; border: 1px solid var(--glass-border);
+            width: 90%; max-width: 450px; padding: 30px; border-radius: 16px;
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.1);
         }
+
+        /* 3. 채팅방 */
+        #chat-view { display: none; flex-direction: column; height: 100vh; }
+        
+        .chat-header {
+            padding: 15px 20px; background: rgba(10, 15, 25, 0.95); border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-info h2 { margin: 0; font-size: 1.2rem; color: white; }
+        .chat-info span { font-size: 0.8rem; color: var(--accent); }
+        .notice-box {
+            background: rgba(0, 242, 255, 0.05); border-bottom: 1px solid rgba(0, 242, 255, 0.1);
+            padding: 10px 20px; font-size: 0.85rem; color: #ccddee;
+        }
+
+        #chat-list { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .msg-row { display: flex; flex-direction: column; max-width: 80%; }
+        .msg-row.mine { align-self: flex-end; align-items: flex-end; }
+        .msg-row.theirs { align-self: flex-start; align-items: flex-start; }
+        
+        .msg-bubble {
+            padding: 10px 15px; border-radius: 12px; font-size: 0.95rem; line-height: 1.5; word-break: break-all;
+            background: #223344; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .msg-row.mine .msg-bubble { background: #006eff; color: white; border: none; }
+        .msg-row.admin .msg-bubble { border: 1px solid var(--accent); color: var(--accent); background: rgba(0, 242, 255, 0.05); }
+
+        .input-area { padding: 15px; background: #0a0f18; border-top: 1px solid #333; display: flex; gap: 10px; }
+
     </style>
 </head>
 <body>
-    <div id="chat-shell">
-        <div id="chat-header">
-            <div id="chat-header-left">
-                <div class="status-dot"></div>
-                <div>
-                    <div id="chat-title">익명 자유 채팅</div>
-                    <div id="chat-subtitle">모르는 사람들과의 만남</div>
-                </div>
-            </div>
-            <div id="chat-header-right">
-                실시간 연결 · <span id="user-count">∞</span> online
+    <div class="stars"></div>
+
+    <div id="lobby-view">
+        <div class="header-box">
+            <h1 style="margin:0; font-size:2.5rem; color:white;">JINDO<span style="color:var(--accent)">NET</span></h1>
+            <p style="color:#8899ac;">익명성, 보안, 그리고 자유를 위한 공간</p>
+            
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button class="btn-primary" onclick="openModal('create')">채널 만들기</button>
+                <button style="background:#334; color:white; border:1px solid #556; padding:12px; border-radius:8px;" onclick="openModal('join-private')">비공개 접속</button>
             </div>
         </div>
 
-        <div id="message-list"></div>
-
-        <div id="input-area">
-            <div id="top-input-row">
-                <input type="text" id="username-input" value="익명" placeholder="닉네임">
-            </div>
-            <div id="message-input-row">
-                <input type="text" id="message-input" placeholder="메시지 입력 (Enter)">
-                <button id="send-button"><span>전송</span></button>
-            </div>
-            <div id="footer-note">
-                상대방을 존중하세요
-            </div>
+        <h3 style="color:var(--text-muted); border-bottom:1px solid #333; padding-bottom:10px;">공개 주파수 목록</h3>
+        <div id="public-channel-list" class="channel-grid">
+            <div style="color:#555; padding:20px;">채널을 불러오는 중...</div>
         </div>
     </div>
-    <script>
-        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
 
+    <div id="chat-view">
+        <div class="chat-header">
+            <div class="chat-info">
+                <h2 id="room-title">Channel Name</h2>
+                <span id="room-status">● 연결됨</span>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-danger" id="admin-btn" style="display:none;" onclick="deleteChannel()">채널 폭파</button>
+                <button style="background:#333; border:none; color:white; padding:5px 15px; border-radius:4px;" onclick="exitRoom()">나가기</button>
+            </div>
+        </div>
+        <div id="room-notice" class="notice-box"></div>
+
+        <div id="chat-list"></div>
+
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="메시지 입력..." onkeypress="if(event.keyCode==13) sendMessage()">
+            <button class="btn-primary" onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <div id="modal-create" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="color:var(--accent);">새 채널 개설</h2>
+            <input type="text" id="new-name" placeholder="채널 이름 (영문/숫자 권장)" style="margin-bottom:10px;">
+            <textarea id="new-desc" placeholder="채널 규칙 및 설명 (공지사항)" rows="3" style="margin-bottom:10px;"></textarea>
+            <input type="password" id="new-admin-code" placeholder="방장 비밀번호 (채널 관리용)" style="margin-bottom:10px;">
+            
+            <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer; color:#ccc;">
+                <input type="checkbox" id="is-public" checked> 
+                <span>공개 목록에 표시 (체크 해제 시 비공개)</span>
+            </label>
+
+            <button class="btn-primary" style="width:100%;" onclick="createChannel()">채널 생성</button>
+            <button style="width:100%; background:none; border:none; color:#666; margin-top:10px;" onclick="closeModal()">취소</button>
+        </div>
+    </div>
+
+    <div id="modal-join-private" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="color:#fff;">비공개 채널 접속</h2>
+            <p style="font-size:0.8rem; color:#888;">초대받은 채널 이름과 암호키를 입력하세요.</p>
+            <input type="text" id="p-name" placeholder="채널 이름" style="margin-bottom:10px;">
+            <input type="password" id="p-key" placeholder="암호화 키" style="margin-bottom:20px;">
+            <button class="btn-primary" style="width:100%;" onclick="joinPrivate()">접속 시도</button>
+            <button style="width:100%; background:none; border:none; color:#666; margin-top:10px;" onclick="closeModal()">취소</button>
+        </div>
+    </div>
+
+    <div id="modal-nick" class="modal-overlay">
+        <div class="modal-box">
+            <h2>코드네임 설정</h2>
+            <input type="text" id="my-nick" placeholder="사용할 닉네임">
+            <button class="btn-primary" style="width:100%; margin-top:15px;" onclick="setNickname()">확인</button>
+        </div>
+    </div>
+
+    <script>
+        // =================================================
+        // [필수] 본인의 Supabase 키로 교체
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        // =================================================
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        const messageList   = document.getElementById('message-list');
-        const usernameInput = document.getElementById('username-input');
-        const messageInput  = document.getElementById('message-input');
-        const sendButton    = document.getElementById('send-button');
+        let myNick = localStorage.getItem('jindo_nick') || "";
+        let currentRoom = null;
+        let currentKey = null;
+        let currentAdminCode = null; // 내가 방장일 때 저장
+        let subscription = null;
 
-        function appendMessage(username, text, time) {
-            const item = document.createElement('div');
-            item.className = 'message-item';
-            const header = document.createElement('div');
-            header.className = 'message-header';
-            const userSpan = document.createElement('span');
-            userSpan.className = 'message-username';
-            userSpan.textContent = username;
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'message-time';
-            timeSpan.textContent = time;
-            header.appendChild(userSpan);
-            header.appendChild(timeSpan);
-            const body = document.createElement('div');
-            body.className = 'message-body';
-            body.textContent = text;
-            item.appendChild(header);
-            item.appendChild(body);
-            messageList.appendChild(item);
-            messageList.scrollTop = messageList.scrollHeight;
+        // [초기화]
+        window.onload = () => {
+            if (!myNick) document.getElementById('modal-nick').style.display = 'flex';
+            loadPublicChannels();
+        };
+
+        function setNickname() {
+            const nick = document.getElementById('my-nick').value.trim();
+            if (!nick) return alert("닉네임을 입력하세요");
+            myNick = nick;
+            localStorage.setItem('jindo_nick', nick);
+            document.getElementById('modal-nick').style.display = 'none';
         }
 
-        async function loadMessages() {
+        // [기능 1] 공개 채널 목록 불러오기
+        async function loadPublicChannels() {
+            const listEl = document.getElementById('public-channel-list');
             const { data, error } = await client
-                .from('messages')
+                .from('channels')
                 .select('*')
-                .order('created_at', { ascending: false })
-                .limit(50);
+                .eq('is_public', true)
+                .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('불러오기 에러:', error);
-                return;
-            }
-            
-            messageList.innerHTML = '';
-            const reversedData = data.reverse();
-            reversedData.forEach(msg => {
-                const date = new Date(msg.created_at);
-                const timeString = date.toTimeString().split(' ')[0];
-                appendMessage(msg.username, msg.message, timeString);
+            if (error) return console.error(error);
+
+            listEl.innerHTML = "";
+            if (data.length === 0) listEl.innerHTML = "<p style='color:#555; padding:20px;'>개설된 공개 채널이 없습니다.</p>";
+
+            data.forEach(ch => {
+                const div = document.createElement('div');
+                div.className = 'channel-card';
+                div.innerHTML = `
+                    <h3># ${ch.name}</h3>
+                    <p>${ch.description || '규칙 없음'}</p>
+                `;
+                // 공개 채널은 '채널명' 자체가 암호키가 됩니다. (편의성)
+                div.onclick = () => enterRoom(ch.name, ch.name, ch.description);
+                listEl.appendChild(div);
             });
         }
 
-        async function sendMessage() {
-            console.log("전송 시도 중..."); 
-            const username = usernameInput.value.trim() || '익명';
-            const message  = messageInput.value.trim();
+        // [기능 2] 채널 생성
+        async function createChannel() {
+            const name = document.getElementById('new-name').value.trim();
+            const desc = document.getElementById('new-desc').value.trim();
+            const code = document.getElementById('new-admin-code').value.trim();
+            const isPublic = document.getElementById('is-public').checked;
 
-            if (message === '') return;
+            if (!name || !code) return alert("채널명과 방장 비밀번호는 필수입니다.");
 
-            const { error } = await client
-                .from('messages')
-                .insert({ username: username, message: message });
+            const { error } = await client.from('channels').insert({
+                name: name,
+                description: desc,
+                is_public: isPublic,
+                admin_code: code
+            });
 
             if (error) {
-                console.error('전송 에러:', error);
-                alert('전송 실패: ' + error.message); 
+                if (error.code === '23505') alert("이미 존재하는 채널 이름입니다.");
+                else alert("생성 실패: " + error.message);
             } else {
-                console.log("전송 성공!");
-                messageInput.value = '';
-                loadMessages();
+                alert("채널이 개설되었습니다!");
+                closeModal();
+                loadPublicChannels();
             }
         }
 
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        // [기능 3] 방 입장 (공통)
+        async function enterRoom(roomName, key, desc) {
+            currentRoom = roomName;
+            currentKey = key;
+            
+            // UI 전환
+            document.getElementById('lobby-view').style.display = 'none';
+            document.getElementById('chat-view').style.display = 'flex';
+            document.getElementById('room-title').innerText = "# " + roomName;
+            document.getElementById('room-notice').innerText = "📢 " + (desc || "별도의 공지가 없습니다.");
 
-        loadMessages();
-        setInterval(loadMessages, 2000);
+            // 방장 권한 확인 (임시로 로컬스토리지나 입력값 체크 안함, 삭제 시 물어봄)
+            document.getElementById('admin-btn').style.display = 'block'; // 누르면 비번 물어봄
+
+            loadMessages();
+            subscribe();
+        }
+
+        // 비공개 방 입장 시도
+        async function joinPrivate() {
+            const name = document.getElementById('p-name').value.trim();
+            const key = document.getElementById('p-key').value.trim();
+            if(!name || !key) return alert("정보를 입력하세요");
+
+            // 채널이 실제로 존재하는지 확인 (규칙 가져오기 위해)
+            const { data } = await client.from('channels').select('description').eq('name', name).single();
+            
+            if (!data) {
+                if(!confirm("존재하지 않는 채널입니다. 임시 채널로 접속하시겠습니까? (규칙 없음)")) return;
+                enterRoom(name, key, "임시 주파수입니다.");
+            } else {
+                enterRoom(name, key, data.description);
+            }
+            closeModal();
+        }
+
+        function exitRoom() {
+            if(subscription) subscription.unsubscribe();
+            currentRoom = null;
+            document.getElementById('chat-view').style.display = 'none';
+            document.getElementById('lobby-view').style.display = 'block';
+            document.getElementById('chat-list').innerHTML = '';
+            loadPublicChannels(); // 목록 갱신
+        }
+
+        // [기능 4] 메시지 로드 및 전송 (암호화 적용)
+        async function loadMessages() {
+            const { data } = await client
+                .from('chat_messages')
+                .select('*')
+                .eq('room_name', currentRoom)
+                .order('created_at', { ascending: true })
+                .limit(50);
+            
+            if(data) data.forEach(renderMessage);
+            scrollToBottom();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const text = input.value;
+            if (!text) return;
+
+            const encrypted = CryptoJS.AES.encrypt(text, currentKey).toString();
+
+            await client.from('chat_messages').insert({
+                room_name: currentRoom,
+                nickname: myNick,
+                content: encrypted
+            });
+            input.value = '';
+        }
+
+        function renderMessage(msg) {
+            const list = document.getElementById('chat-list');
+            const isMine = msg.nickname === myNick;
+            let text = "";
+            let isError = false;
+
+            try {
+                const bytes = CryptoJS.AES.decrypt(msg.content, currentKey);
+                text = bytes.toString(CryptoJS.enc.Utf8);
+                if(!text) throw new Error();
+            } catch (e) {
+                text = "🔒 해독 불가 (잘못된 키)";
+                isError = true;
+            }
+
+            const div = document.createElement('div');
+            div.className = isMine ? 'msg-row mine' : 'msg-row';
+            div.innerHTML = `
+                <div style="font-size:0.75rem; color:#667; margin:0 5px 2px 5px;">${msg.nickname}</div>
+                <div class="msg-bubble" style="${isError ? 'color:#ff5555; border:1px dashed #553333; background:none;' : ''}">${text}</div>
+            `;
+            list.appendChild(div);
+            scrollToBottom();
+        }
+
+        function subscribe() {
+            subscription = client.channel(currentRoom)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_name=eq.${currentRoom}` }, 
+                payload => { renderMessage(payload.new); })
+                .subscribe();
+        }
+
+        // [기능 5] 방장 기능 (채널 삭제)
+        async function deleteChannel() {
+            const code = prompt("채널을 삭제하려면 방장 비밀번호를 입력하세요:");
+            if (!code) return;
+
+            // 1. 비밀번호 확인
+            const { data, error } = await client
+                .from('channels')
+                .select('id')
+                .eq('name', currentRoom)
+                .eq('admin_code', code)
+                .single();
+
+            if (error || !data) return alert("비밀번호가 틀렸거나 권한이 없습니다.");
+
+            if (!confirm("정말 삭제하시겠습니까? 모든 대화내용은 유지되지만 목록에서 사라집니다.")) return;
+
+            // 2. 삭제 (채널 정보만 삭제, 로그는 남겨두거나 같이 지울 수 있음)
+            await client.from('channels').delete().eq('id', data.id);
+            alert("채널이 삭제되었습니다.");
+            exitRoom();
+        }
+
+        // UI 헬퍼
+        function scrollToBottom() { const l = document.getElementById('chat-list'); l.scrollTop = l.scrollHeight; }
+        function openModal(id) { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display='none');
+            if(id==='create') document.getElementById('modal-create').style.display='flex';
+            if(id==='join-private') document.getElementById('modal-join-private').style.display='flex';
+        }
+        function closeModal() { document.querySelectorAll('.modal-overlay').forEach(el => el.style.display='none'); }
+
     </script>
 </body>
 </html>
