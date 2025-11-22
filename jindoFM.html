@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDO-WAVE FM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <style>
+        /* 📻 [Retro Cyberpunk Radio Theme] */
+        :root {
+            --bg-deep: #100505; /* 약간 붉은기 도는 어두운 배경 */
+            --neon: #ff3300;    /* 앰버/레드 계열 */
+            --glass: rgba(50, 20, 20, 0.5);
+            --border: #ff5500;
+        }
+        
+        body {
+            background: var(--bg-deep); color: var(--neon);
+            font-family: 'Pretendard', monospace;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 비주얼라이저 (장식) */
+        .visualizer {
+            display: flex; gap: 5px; height: 60px; align-items: flex-end; margin-bottom: 20px;
+        }
+        .bar {
+            width: 10px; background: var(--neon);
+            animation: equalizer 1s infinite ease-in-out;
+        }
+        @keyframes equalizer { 0%, 100% {height: 10px;} 50% {height: 50px;} }
+
+        /* 메인 라디오 박스 */
+        .radio-box {
+            width: 100%; max-width: 600px;
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            background: #000;
+            box-shadow: 0 0 20px var(--neon);
+            text-align: center;
+            position: relative;
+        }
+
+        .screen {
+            background: #110505;
+            border: 1px solid #551111;
+            padding: 20px;
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 1.1rem;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        
+        /* 유튜브 숨김 (소리만 나오게) */
+        #player-container {
+            position: absolute; opacity: 0; pointer-events: none; z-index: -1;
+        }
+
+        /* 제어 버튼 */
+        .btn {
+            background: var(--neon); color: #000; border: none;
+            padding: 10px 20px; font-weight: bold; font-size: 1rem;
+            cursor: pointer; margin: 5px; text-transform: uppercase;
+        }
+        .btn:hover { background: #fff; }
+
+        .btn-off { background: #333; color: #666; }
+
+        /* 사연 신청 폼 */
+        .request-form {
+            margin-top: 30px; width: 100%; max-width: 600px;
+            border-top: 1px solid var(--border); padding-top: 20px;
+        }
+        input, textarea {
+            width: 100%; background: #220a0a; border: 1px solid var(--border);
+            color: white; padding: 10px; margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        /* DJ 패널 (비밀) */
+        #dj-panel {
+            display: none; /* 평소엔 안보임 */
+            margin-top: 50px; border: 1px dashed white; padding: 20px; width: 100%; max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-shadow: 0 0 10px var(--neon);">JINDO-WAVE <span style="font-size:0.5em;">Λ-0326 kHz</span></h1>
+
+    <div class="visualizer">
+        <div class="bar" style="animation-duration: 0.8s"></div>
+        <div class="bar" style="animation-duration: 1.2s"></div>
+        <div class="bar" style="animation-duration: 0.5s"></div>
+        <div class="bar" style="animation-duration: 1.0s"></div>
+        <div class="bar" style="animation-duration: 0.7s"></div>
+    </div>
+
+    <div class="radio-box">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span>🔴 ON AIR</span>
+            <span id="listener-count">Listeners: 1</span>
+        </div>
+        
+        <div class="screen" id="display-screen">
+            [시스템] 비인가 극지 난수 채널 LUMI-0326 탐지.
+            [시스템] 루미의 디코더에 접속하려면 전원을 넣으세요...
+        </div>
+
+        <button class="btn" id="power-btn" onclick="powerOn()">⚡ POWER ON (TUNE IN)</button>
+        <div id="status-text" style="margin-top:10px; color:#aaa; display:none;">주파수 동기화 완료. DJ의 신호를 대기중...</div>
+        
+        <div id="player-container"><div id="player"></div></div>
+    </div>
+
+    <div class="request-form">
+        <h3>사연 & 신청곡 보내기</h3>
+        <input type="text" id="req-nick" placeholder="닉네임">
+        <textarea id="req-msg" rows="3" placeholder="사연 내용 (DJ 루미가 읽어줍니다)"></textarea>
+        <input type="text" id="req-url" placeholder="유튜브 링크 (선택사항)">
+        <button class="btn" onclick="sendRequest()">사연 보내기</button>
+    </div>
+
+    <div style="margin-top:30px; cursor:pointer; color:#330000;" onclick="toggleDJ()">Ω</div>
+    <div id="dj-panel">
+        <h3>🎛️ DJ CONTROL (ADMIN)</h3>
+        <p>대기중인 사연:</p>
+        <div id="queue-list" style="margin-bottom:10px; color:#fff;"></div>
+        <button class="btn" onclick="playNext()">▶️ 다음 사연/곡 재생 (방송 송출)</button>
+        <button class="btn btn-off" onclick="stopBroadcast()">⏹ 방송 중단</button>
+    </div>
+
+    <script>
+        // =================================================
+        const supabaseUrl = 'https://본인주소.supabase.co'
+        const supabaseKey = 'eyJ로_시작하는_긴_키'
+        // =================================================
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 유튜브 & TTS 변수
+        let player;
+        let isPowerOn = false;
+        let synth = window.speechSynthesis;
+
+        // 1. 유튜브 API 준비
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '0', width: '0',
+                videoId: '', // 초기값 없음
+                events: { 'onReady': onPlayerReady }
+            });
+        }
+        function onPlayerReady(event) { console.log("Youtube Ready"); }
+
+        // 2. 전원 켜기 (청취 시작)
+        function powerOn() {
+            isPowerOn = true;
+            document.getElementById('power-btn').style.display = 'none';
+            document.getElementById('status-text').style.display = 'block';
+            document.getElementById('display-screen').innerText = ">>> LUMI-0326 (3.260 MHz · HF Λ-BAND)\n>>> 국가 군사 통제 주파수에 무단 접속 중...\n>>> DJ RUMI가 불법무선국을 준비중 입니다.";
+            
+            // TTS 워밍업 (모바일 대응)
+            speak("진도 웨이브에 오신 것을 환영합니다.", true); 
+
+            // 현재 방송 상태 확인
+            syncCurrentState();
+            // 실시간 구독 시작
+            subscribeRadio();
+        }
+
+        // 3. 실시간 동기화 (핵심!)
+        function subscribeRadio() {
+            client.channel('public:radio_state')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'radio_state' }, payload => {
+                    handleBroadcast(payload.new);
+                })
+                .subscribe();
+        }
+
+        // 방송 신호 처리
+        function handleBroadcast(state) {
+            const screen = document.getElementById('display-screen');
+            
+            if (state.current_action === 'talking') {
+                // 1. 음악 멈춤
+                if(player && player.stopVideo) player.stopVideo();
+                
+                // 2. 텍스트 표시 & TTS 읽기
+                screen.innerText = `[DJ RUMI]:\n${state.payload}`;
+                if(isPowerOn) speak(state.payload);
+
+            } else if (state.current_action === 'music') {
+                // 1. TTS 멈춤
+                synth.cancel();
+
+                // 2. 화면 표시
+                screen.innerText = `[NOW PLAYING] 🎵\nYouTube ID: ${state.payload}`;
+
+                // 3. 유튜브 재생 (싱크 맞추기)
+                if(player && isPowerOn) {
+                    const now = new Date().getTime();
+                    const startedAt = new Date(state.started_at).getTime();
+                    const seekTo = (now - startedAt) / 1000; // 경과 시간(초)
+
+                    player.loadVideoById(state.payload, seekTo);
+                }
+            } else {
+                screen.innerText = "방송 대기 중...";
+                if(player) player.stopVideo();
+            }
+        }
+
+        // 4. TTS 함수 (DJ 루미)
+        function speak(text, isSilent=false) {
+            if (synth.speaking) synth.cancel();
+            if (isSilent) return; // 워밍업용
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.pitch = 1.2; // 약간 높은 톤 (루미)
+            utterance.rate = 1.1;  // 약간 빠르게
+            
+            // 목소리 선택 (가능하면 여성/Google 한국어)
+            const voices = synth.getVoices();
+            const rumiVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('ko')) || voices[0];
+            if(rumiVoice) utterance.voice = rumiVoice;
+
+            synth.speak(utterance);
+        }
+
+        // 5. 사연 보내기
+        async function sendRequest() {
+            const nick = document.getElementById('req-nick').value;
+            const msg = document.getElementById('req-msg').value;
+            let url = document.getElementById('req-url').value;
+            
+            // 유튜브 ID 추출
+            let vidId = null;
+            if (url) {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                const match = url.match(regExp);
+                if (match && match[2].length == 11) vidId = match[2];
+            }
+
+            if(!nick || !msg) return alert("내용을 입력하세요.");
+
+            await client.from('radio_queue').insert({
+                nickname: nick, message: msg, youtube_id: vidId
+            });
+            alert("사연이 접수되었습니다! DJ가 곧 읽어줍니다.");
+            document.getElementById('req-msg').value = '';
+            document.getElementById('req-url').value = '';
+        }
+
+        // =================================================
+        // [DJ 기능] 관리자만 사용
+        // =================================================
+        function toggleDJ() {
+            const pass = prompt("관리자 코드를 입력하세요:");
+            if(pass === "jindo123") {
+                document.getElementById('dj-panel').style.display = 'block';
+                refreshQueue();
+            }
+        }
+
+        async function refreshQueue() {
+            const { data } = await client.from('radio_queue')
+                .select('*').eq('status', 'waiting').order('created_at', { ascending: true });
+            
+            const list = document.getElementById('queue-list');
+            list.innerHTML = '';
+            if(data) {
+                data.forEach(q => {
+                    list.innerHTML += `<div>- [${q.nickname}] ${q.message.substring(0,15)}... (${q.youtube_id ? '🎵' : '🗣️'})</div>`;
+                });
+            }
+        }
+
+        // [핵심] 방송 송출 (DB State 업데이트 -> 모든 청취자 반응)
+        async function playNext() {
+            // 1. 대기열에서 하나 가져오기
+            const { data } = await client.from('radio_queue')
+                .select('*').eq('status', 'waiting').order('created_at', { ascending: true }).limit(1).single();
+
+            if (!data) return alert("대기중인 사연이 없습니다.");
+
+            // 2. [단계 1] 사연 읽기 송출
+            // DJ 멘트 구성
+            const djScript = `[사연 도착] ${data.nickname}님의 사연입니다.\n\n"${data.message}"`;
+            
+            await client.from('radio_state').update({
+                current_action: 'talking',
+                payload: djScript,
+                started_at: new Date().toISOString()
+            }).eq('id', 1);
+
+            // TTS가 읽을 시간 대충 계산 (글자수 * 200ms) 후 음악 재생 예약
+            const readingTime = djScript.length * 250 + 2000; 
+            
+            setTimeout(async () => {
+                // 3. [단계 2] 음악 재생 (유튜브가 있다면)
+                if (data.youtube_id) {
+                    await client.from('radio_state').update({
+                        current_action: 'music',
+                        payload: data.youtube_id,
+                        started_at: new Date().toISOString()
+                    }).eq('id', 1);
+                } else {
+                    // 음악 없으면 대기 상태로
+                    await client.from('radio_state').update({ current_action: 'idle', payload: '다음 곡 대기 중...' }).eq('id', 1);
+                }
+
+                // 4. 처리 완료 표시
+                await client.from('radio_queue').update({ status: 'played' }).eq('id', data.id);
+                refreshQueue();
+
+            }, readingTime);
+        }
+        
+        async function stopBroadcast() {
+             await client.from('radio_state').update({ current_action: 'idle', payload: '방송이 잠시 중단되었습니다.' }).eq('id', 1);
+        }
+
+        async function syncCurrentState() {
+            const { data } = await client.from('radio_state').select('*').eq('id', 1).single();
+            if(data) handleBroadcast(data);
+        }
+
+    </script>
+</body>
+</html>

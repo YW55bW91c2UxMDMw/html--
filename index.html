@@ -157,53 +157,111 @@
         <p class="sub-title">익명과 자유의 사이버 스페이스에 오신 것을 환영합니다.</p>
 
         <div class="link-container">
-            <a href="video.html" class="link-card">
-                <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스"S>
-                <div class="link-text">
-                    <span class="link-title">JINDOFLIX</span>
-                    <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
-                </div>
-            </a>
 
-            <a href="board.html" class="link-card">
-                <img src="img/rumi_board.png" alt="루미 게시판">
-                <div class="link-text">
-                    <span class="link-title">익명 게시판 /b/</span>
-                    <span class="link-desc">추적 불가능한 자유 공간</span>
-                </div>
-            </a>
+    <a href="identity.html" class="link-card">
+        <img src="img/rumi_fakeID.png" alt="가짜ID">
+        <div class="link-text">
+            <span class="link-title">가짜 ID 생성기</span>
+            <span class="link-desc">가짜 정보를 얻으세요</span>
+        </div>
+    </a>
 
-            <a href="chat.html" class="link-card">
-                <img src="img/rumi_chat.png" alt="루미 채팅">
-                <div class="link-text">
-                    <span class="link-title">익명 채팅</span>
-                    <span class="link-desc">익명 자유 채팅</span>
-                </div>
-            </a>
+    <a href="board.html" class="link-card">
+        <img src="img/rumi_board.png" alt="루미 게시판">
+        <div class="link-text">
+            <span class="link-title">익명 게시판 /b/</span>
+            <span class="link-desc">추적 불가능한 자유 공간</span>
+        </div>
+    </a>
 
-            <a href="trans.html" class="link-card">
-                <img src="img/rumi_dprk.png" alt="바른 말 교정기">
-                <div class="link-text">
-                    <span class="link-title">바른 말 교정기</span>
-                    <span class="link-desc">아름다운 우리 말</span>
-                </div>
-            </a>
+    <a href="chat.html" class="link-card">
+        <img src="img/rumi_chat.png" alt="루미 채팅">
+        <div class="link-text">
+            <span class="link-title">익명 채팅</span>
+            <span class="link-desc">익명 자유 채팅</span>
+        </div>
+    </a>
 
-            <a href="#" onclick="goRandomPage(); return false;" class="link-card">
-                <img src="img/rumi_random.png" alt="랜덤 워프">
-                <div class="link-text">
-                    <span class="link-title">I'm Feeling Foxy!</span>
-                    <span class="link-desc">운명에 맡기기 (랜덤 이동)</span>
-                </div>
-            </a>
+    <a href="trans.html" class="link-card">
+        <img src="img/rumi_dprk.png" alt="바른 말 교정기">
+        <div class="link-text">
+            <span class="link-title">바른 말 교정기</span>
+            <span class="link-desc">아름다운 우리 말</span>
+        </div>
+    </a>
 
-            </div>
+    <a href="capsule.html" class="link-card">
+        <img src="img/rumi_capsule.png" alt="타임갭슐">
+        <div class="link-text">
+            <span class="link-title">타임 캡슐</span>
+            <span class="link-desc">미래의 당신에게 편지를 쓰세요</span>
+        </div>
+    </a>
 
-        <p style="margin-top: 50px; color: #666; font-size: 0.8rem;">
-            © 2025 JINDOSTAR Corp. All rights reserved.
-        </p>
+    <a href="#" onclick="toggleMoreMenu(); return false;" class="link-card" id="more-btn">
+        <img src="img/rumi_search.png" alt="더보기" style="filter: hue-rotate(90deg);"> 
+        <div class="link-text">
+            <span class="link-title" id="more-text">Explore More</span>
+            <span class="link-desc">전체 메뉴 보기</span>
+        </div>
+    </a>
+</div>
+
+<div id="hidden-menu" class="link-container" style="display: none; margin-top: 25px; opacity: 0; transition: opacity 0.5s ease;">
+    
+    <a href="#" onclick="goRandomPage(); return false;" class="link-card" style="border-color: var(--accent);">
+        <img src="img/rumi_random.png" alt="랜덤 워프">
+        <div class="link-text">
+            <span class="link-title">I'm Feeling Foxy!</span>
+            <span class="link-desc">랜덤 페이지로 워프</span>
+        </div>
+    </a>
+
+    <a href="video.html" class="link-card">
+        <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스">
+        <div class="link-text">
+            <span class="link-title">JINDOFLIX</span>
+            <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
+        </div>
+    </a>
+
+    <a href="software.html" class="link-card">
+        <img src="img/rumi_pirate.png" alt="해적 루미">
+        <div class="link-text">
+            <span class="link-title">파일 공유</span>
+            <span class="link-desc">자신의 창작물을 공유하세요</span>
+        </div>
+    </a>
+
+    <a href="dansen.html" class="link-card">
+        <div class="link-text">
+            <span class="link-title">Dansen</span>
+            <span class="link-desc">단센 페이지</span>
+        </div>
+    </a>
+    
     </div>
 <script>
+    // 1. 더보기 메뉴 토글 함수
+    function toggleMoreMenu() {
+        const menu = document.getElementById('hidden-menu');
+        const btnText = document.getElementById('more-text');
+
+        if (menu.style.display === 'none') {
+            // 메뉴 열기
+            menu.style.display = 'grid';
+            // 약간의 딜레이를 주어 페이드인 효과 적용
+            setTimeout(() => { menu.style.opacity = '1'; }, 10);
+            btnText.innerText = "Close Menu"; // 텍스트 변경 (선택사항)
+        } else {
+            // 메뉴 닫기
+            menu.style.opacity = '0';
+            setTimeout(() => { menu.style.display = 'none'; }, 500); // 애니메이션 후 숨김
+            btnText.innerText = "Explore More";
+        }
+    }
+
+    // 2. 랜덤 이동 함수 (기존 유지)
     function goRandomPage() {
         const pages = [
             'board.html',
@@ -214,19 +272,12 @@
             'mad.html',
             'trans.html',
             'video.html',
-            '연습/연습.html',
-            '연습/연습1.html',
-            '연습/연습2.html',
-            '연습/연습3.html',
-            '연습/연습4.html',
         ];
 
-        // 2. 주사위 굴리기 (랜덤 선택)
         const randomIndex = Math.floor(Math.random() * pages.length);
         const targetPage = pages[randomIndex];
 
-        // 3. 이동 (약간의 재미를 위해 콘솔에 로그 찍음)
-        console.log(`🎲 주사위 결과: ${targetPage} 로 이동합니다!`);
+        console.log(`🎲 워프: ${targetPage}`);
         window.location.href = targetPage;
     }
 </script>
