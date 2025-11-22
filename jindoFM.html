@@ -140,11 +140,11 @@
     </div>
 
     <script>
-        // =================================================
-        const supabaseUrl = 'https://본인주소.supabase.co'
-        const supabaseKey = 'eyJ로_시작하는_긴_키'
-        // =================================================
-        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        import { createClient } from '@supabase/supabase-js'
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = process.env.SUPABASE_KEY
+        const supabase = createClient(supabaseUrl, supabaseKey)
 
         // 유튜브 & TTS 변수
         let player;
