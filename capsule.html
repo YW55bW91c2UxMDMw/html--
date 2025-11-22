@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - Time Capsule</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 폰트 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Supabase & 암호화 라이브러리 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* 🌌 [Deep Space & Ice Theme] */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;       /* 네온 시안 (얼음색) */
+            --ice-glow: rgba(0, 212, 255, 0.4);
+            --glass-bg: rgba(20, 25, 40, 0.6);
+            --glass-border: rgba(100, 200, 255, 0.2);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 배경 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 🎞️ 상단 뉴스 티커 (흐르는 메시지) */
+        .ticker-wrap {
+            position: fixed; top: 60px; width: 100%; overflow: hidden; height: 40px;
+            background: rgba(0, 20, 40, 0.8); border-bottom: 1px solid var(--accent);
+            display: flex; align-items: center; z-index: 90;
+            backdrop-filter: blur(5px);
+        }
+        .ticker {
+            display: flex; white-space: nowrap;
+            animation: ticker 30s linear infinite;
+        }
+        .ticker-item {
+            margin-right: 50px; color: var(--accent); font-size: 0.9rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        @keyframes ticker { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* 네비게이션 */
+        .top-bar {
+            padding: 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid #333;
+            display: flex; gap: 15px; position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .top-bar a { text-decoration: none; color: var(--text-sub); font-weight: bold; }
+        .top-bar a:hover { color: var(--accent); }
+
+        /* 메인 컨테이너 */
+        .container { max-width: 1000px; margin: 120px auto 50px auto; padding: 0 20px; }
+
+        .header-title { text-align: center; margin-bottom: 40px; }
+        .header-title h1 { font-size: 2.5rem; color: var(--accent); text-shadow: 0 0 20px var(--accent); margin: 0; }
+        .header-title p { color: var(--text-sub); margin-top: 10px; }
+
+        /* 🧊 얼음 큐브 작성 폼 */
+        .capsule-form {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 30px; max-width: 600px; margin: 0 auto 60px auto;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+            position: relative; overflow: hidden;
+        }
+        .capsule-form::before {
+            content: '❄️ CRYO-SLEEP SYSTEM'; position: absolute; top: 10px; left: 15px;
+            font-size: 0.7rem; color: var(--accent); opacity: 0.7; letter-spacing: 2px;
+        }
+
+        input, textarea {
+            width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid #444;
+            color: white; padding: 12px; margin-bottom: 15px; border-radius: 5px;
+            font-family: 'Pretendard'; outline: none; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--ice-glow); }
+        
+        .freeze-btn {
+            width: 100%; padding: 15px; background: linear-gradient(45deg, #00d4ff, #0066ff);
+            border: none; border-radius: 5px; color: white; font-weight: 900; font-size: 1.1rem;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .freeze-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--ice-glow); }
+
+        /* 🧊 캡슐 그리드 */
+        .capsule-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
+        }
+
+        .ice-cube {
+            background: rgba(150, 200, 255, 0.05);
+            border: 1px solid rgba(150, 200, 255, 0.2);
+            border-radius: 12px; padding: 20px; height: 200px;
+            position: relative; cursor: pointer; transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; backdrop-filter: blur(5px);
+        }
+        .ice-cube:hover {
+            background: rgba(150, 200, 255, 0.1); border-color: var(--accent);
+            transform: translateY(-5px); box-shadow: 0 0 20px var(--ice-glow);
+        }
+
+        /* 상태별 스타일 */
+        .status-frozen { font-size: 3rem; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--accent)); }
+        .status-melted { font-size: 3rem; margin-bottom: 10px; filter: drop-shadow(0 0 10px #ffaa00); }
+        
+        .cube-date { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin-top: 10px; }
+        .cube-name { font-size: 0.9rem; color: #fff; margin-top: 5px; }
+        .cube-dday { 
+            position: absolute; top: 10px; right: 10px; 
+            font-size: 0.7rem; background: rgba(0,0,0,0.5); 
+            padding: 2px 6px; border-radius: 4px; color: #aaa; 
+        }
+
+        /* 팝업 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .modal-content {
+            background: #111; border: 2px solid var(--accent); padding: 40px; border-radius: 20px;
+            max-width: 500px; text-align: center; position: relative;
+            box-shadow: 0 0 50px var(--ice-glow);
+        }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #666; }
+        .msg-text { font-size: 1.2rem; line-height: 1.6; margin: 20px 0; white-space: pre-wrap; }
+
+    </style>
+</head>
+<body>
+
+    <nav class="top-bar">
+        <a href="/">JINDOFLIX</a>
+        <a href="/board.html">/b/ 익명채널</a>
+        <a href="/capsule.html" style="color:var(--accent);">타임캡슐</a>
+    </nav>
+
+    <!-- 상단 뉴스 티커 (해동된 메시지) -->
+    <div class="ticker-wrap">
+        <div class="ticker" id="ticker-content">
+            <!-- 자바스크립트로 채워짐 -->
+            <div class="ticker-item">시스템: 해동된 메시지를 스캔 중입니다...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header-title">
+            <h1>CRYO-STORAGE</h1>
+            <p>디지털 냉동 보관소 - 당신의 메시지는 미래에 전달됩니다.</p>
+        </div>
+
+        <!-- 캡슐 입력 폼 -->
+        <div class="capsule-form">
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="input-name" placeholder="닉네임 (익명)" style="flex:1;">
+                <!-- 최소 30일 뒤부터 선택 가능하도록 JS로 제어 -->
+                <input type="date" id="input-date" style="flex:1;">
+            </div>
+            <textarea id="input-msg" placeholder="미래의 누군가(혹은 나)에게 남길 메시지... (봉인되면 수정 불가)" rows="4"></textarea>
+            <button class="freeze-btn" onclick="freezeMessage()">🧊 FREEZE DATA (동결)</button>
+            <div style="text-align:center; font-size:0.8rem; color:#666; margin-top:10px;">
+                * 최소 30일간 봉인됩니다. 내용은 암호화되어 저장됩니다.
+            </div>
+        </div>
+
+        <!-- 캡슐 목록 -->
+        <h2 style="color:white; margin-bottom:20px;">📦 보관된 캡슐들</h2>
+        <div class="capsule-grid" id="capsule-list">
+            <div style="color:#666; grid-column: 1/-1; text-align:center;">데이터 불러오는 중...</div>
+        </div>
+    </div>
+
+    <!-- 메시지 확인 모달 -->
+    <div id="msg-modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('msg-modal').style.display='none'">&times;</span>
+            <div style="font-size:3rem; margin-bottom:10px;">💌</div>
+            <h3 id="modal-title" style="color:var(--accent); margin:0;">해동 완료!</h3>
+            <div id="modal-text" class="msg-text"></div>
+            <div id="modal-date" style="font-size:0.8rem; color:#666;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Supabase 설정
+        const supabaseUrl = 'https://본인주소.supabase.co'
+        const supabaseKey = 'eyJ로_시작하는_긴_키'
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // [중요] 이제 하드코딩된 SECRET_KEY는 없습니다. 유저가 입력한 비번이 키가 됩니다.
+
+        // 3. 날짜 제한 설정 (오늘 + 30일)
+        const today = new Date();
+        const minDate = new Date(today.setDate(today.getDate() + 30));
+        const minDateString = minDate.toISOString().split('T')[0];
+        document.getElementById('input-date').min = minDateString;
+        document.getElementById('input-date').value = minDateString; 
+
+        // 4. 데이터 불러오기
+        async function loadCapsules() {
+            const { data, error } = await client
+                .from('timecapsules')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) return console.error(error);
+
+            const grid = document.getElementById('capsule-list');
+            const ticker = document.getElementById('ticker-content');
+            grid.innerHTML = '';
+            ticker.innerHTML = ''; 
+
+            let hasOpenedMsg = false;
+
+            data.forEach(cap => {
+                const unlockDate = new Date(cap.unlock_date);
+                const now = new Date();
+                // 관리자가 강제 해동(is_frozen=false) 했거나 날짜가 지났으면 해동 상태
+                const isUnlocked = (now >= unlockDate) || !cap.is_frozen; 
+                
+                const diffTime = unlockDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let dDayText = diffDays > 0 ? `D-${diffDays}` : `OPEN`;
+
+                const card = document.createElement('div');
+                card.className = 'ice-cube';
+                
+                if (isUnlocked) {
+                    // [해동됨] - 클릭하면 비밀번호 물어봄
+                    card.innerHTML = `
+                        <div class="status-melted">💧</div>
+                        <div class="cube-name" style="color:#ffcc00;">${cap.nickname}</div>
+                        <div class="cube-date">해동 완료</div>
+                        <div class="cube-dday" style="background:#ffcc00; color:black;">UNLOCKED</div>
+                    `;
+                    card.onclick = () => openMessage(cap); 
+
+                    // 티커에는 "누군가의 캡슐이 열렸습니다" 정도만 표시 (내용은 암호화돼서 못 보여줌)
+                    const tickerItem = document.createElement('div');
+                    tickerItem.className = 'ticker-item';
+                    tickerItem.innerText = `📢 [${cap.nickname}]님의 캡슐 봉인이 해제되었습니다! (비밀번호 필요)`;
+                    ticker.appendChild(tickerItem);
+                    hasOpenedMsg = true;
+                } else {
+                    // [냉동중]
+                    card.innerHTML = `
+                        <div class="status-frozen">🧊</div>
+                        <div class="cube-name">${cap.nickname}</div>
+                        <div class="cube-date">${unlockDate.toLocaleDateString()} 공개</div>
+                        <div class="cube-dday">${dDayText}</div>
+                    `;
+                    card.onclick = () => alert(`❄️ 이 데이터는 동결 상태입니다.\n[${unlockDate.toLocaleDateString()}]까지 기다려주세요.`);
+                }
+                grid.appendChild(card);
+            });
+
+            if (!hasOpenedMsg) {
+                ticker.innerHTML = '<div class="ticker-item">시스템: 현재 해동된 메시지가 없습니다. 우주가 조용합니다... 🌌</div>';
+            }
+        }
+
+        // 5. 메시지 동결 (E2EE 암호화)
+        async function freezeMessage() {
+            const nickname = document.getElementById('input-name').value || '익명';
+            const content = document.getElementById('input-msg').value;
+            const dateVal = document.getElementById('input-date').value;
+
+            if (!content) return alert("메시지를 입력해주세요!");
+            if (!dateVal) return alert("날짜를 선택해주세요!");
+            
+            // [핵심] 사용자에게 비밀번호 받기
+            const userPass = prompt("🔒 이 캡슐을 잠글 '비밀번호'를 설정해주세요.\n(주의: 나중에 이 비밀번호를 모르면 절대 열 수 없습니다!)");
+            if (!userPass) return alert("비밀번호 설정이 취소되었습니다.");
+
+            // [핵심] 사용자의 비밀번호로 암호화 (AES)
+            const encrypted = CryptoJS.AES.encrypt(content, userPass).toString();
+
+            const { error } = await client.from('timecapsules').insert({
+                nickname: nickname,
+                content: encrypted, // 암호화된 텍스트만 서버로 전송됨
+                unlock_date: dateVal,
+                is_frozen: true
+            });
+
+            if (error) {
+                alert("저장 실패: " + error.message);
+            } else {
+                alert("🧊 캡슐이 동결되었습니다!\n설정한 비밀번호를 꼭 기억하세요.");
+                location.reload();
+            }
+        }
+
+        // 6. 메시지 해동 (E2EE 복호화)
+        function openMessage(cap) {
+            // [핵심] 사용자에게 비밀번호 물어보기
+            const inputPass = prompt(`🔒 [${cap.nickname}]님의 캡슐입니다.\n내용을 보려면 비밀번호를 입력하세요:`);
+            
+            if (!inputPass) return;
+
+            try {
+                // [핵심] 입력한 비밀번호로 복호화 시도
+                const bytes = CryptoJS.AES.decrypt(cap.content, inputPass);
+                const originalText = bytes.toString(CryptoJS.enc.Utf8);
+
+                // 복호화 성공 시 내용이 있음, 실패 시 빈 문자열
+                if (!originalText) throw new Error("비밀번호 불일치");
+
+                document.getElementById('modal-title').innerText = "🎉 해동 성공!";
+                document.getElementById('modal-text').innerText = originalText;
+                document.getElementById('modal-date').innerText = `작성자: ${cap.nickname} | 원래 공개일: ${new Date(cap.unlock_date).toLocaleDateString()}`;
+                document.getElementById('msg-modal').style.display = 'flex';
+            
+            } catch (e) {
+                alert("비밀번호가 틀렸거나 데이터가 손상되었습니다.\n(올바른 키가 없으면 복구할 수 없습니다)");
+            }
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'msg-modal') {
+                document.getElementById('msg-modal').style.display = 'none';
+            }
+        }
+
+        loadCapsules();
+    </script>
+
+</body>
+</html>
