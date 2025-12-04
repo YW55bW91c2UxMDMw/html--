@@ -2,161 +2,307 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 레이싱 : 토큰 시스템</title>
+    <title>JINDOSTAR - Rumi Racing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="wallet.js"></script>
+
     <style>
-        /* 기본 스타일 */
-        body { font-family: 'Pretendard', sans-serif; background-color: #1a1a1a; color: white; text-align: center; padding: 10px; overflow-x: hidden; }
-        h1 { margin-bottom: 5px; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
-        
-        /* 상단 정보창 (현금 & 토큰) */
+        /* 🌌 [JindoStar 우주 테마 시스템] */
+        :root {
+            --bg-deep: #050510;
+            --bg-card: rgba(20, 20, 35, 0.6);
+            --accent: #00d4ff;       /* 네온 시안 */
+            --accent-glow: rgba(0, 212, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+            --win-color: #00ff9d;
+            --lose-color: #ff4f6d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 배경 효과 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 상단 네비게이션 */
+        .top-bar {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            display: flex; gap: 15px; align-items: center;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .top-bar a { text-decoration: none; color: var(--text-sub); transition: 0.3s; }
+        .top-bar a:hover { color: var(--accent); }
+        .logo { font-weight: 900; color: var(--accent); letter-spacing: 1px; margin-right: 20px; }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 900px;
+            margin: 80px auto 50px auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem; color: var(--accent);
+            text-shadow: 0 0 20px var(--accent-glow);
+            margin-bottom: 10px; letter-spacing: 2px;
+        }
+
+        /* 💰 HUD 대시보드 (지갑) */
         .dashboard {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 15px;
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;
         }
-        .status-board { 
-            background: linear-gradient(145deg, #2c3e50, #000); 
-            padding: 10px 20px; 
-            border-radius: 12px; 
-            border: 1px solid #555;
-            min-width: 150px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        .hud-box {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            padding: 15px 25px; border-radius: 12px;
+            min-width: 160px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
-        .label { font-size: 0.8em; color: #bbb; display: block; margin-bottom: 5px; }
+        .label { font-size: 0.8em; color: var(--text-sub); display: block; margin-bottom: 5px; }
         .balance { font-size: 1.4em; font-weight: bold; }
-        .money { color: #2ecc71; } /* 현금 색상 */
-        .token { color: #f1c40f; } /* 토큰 색상 */
+        .money { color: var(--win-color); text-shadow: 0 0 10px rgba(0, 255, 157, 0.3); }
+        .token { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
 
-        /* 환전소 스타일 */
-        .exchange-box {
-            background: #333;
+        /* 🎮 게임 컨트롤 패널 */
+        .control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            padding: 20px; border-radius: 15px;
+            display: inline-block; margin-bottom: 20px;
+            box-shadow: 0 0 30px var(--accent-glow);
+            backdrop-filter: blur(10px);
+            width: 100%; max-width: 600px;
+        }
+
+        /* 입력 요소 스타일링 */
+        select, input {
+            padding: 12px; font-size: 1rem;
+            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--glass-border);
+            color: white; border-radius: 6px; outline: none; margin: 5px;
+            font-family: 'Pretendard', monospace;
+        }
+        select:focus, input:focus { border-color: var(--accent); }
+
+        /* 버튼 스타일링 */
+        .btn {
+            padding: 12px 25px; font-size: 1rem; font-weight: bold;
+            background: linear-gradient(135deg, var(--accent), #006eff);
+            color: #000; border: none; border-radius: 6px;
+            cursor: pointer; transition: 0.3s; margin: 5px;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 25px var(--accent-glow); color: white; }
+        .btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
+        
+        .btn-exchange {
+            background: transparent; border: 1px solid var(--glass-border); color: var(--text-sub);
+            padding: 5px 12px; font-size: 0.85rem;
+        }
+        .btn-exchange:hover { border-color: var(--win-color); color: var(--win-color); }
+
+        /* 🏁 트랙 컨테이너 */
+        .track-container {
+            width: 100%; max-width: 800px;
+            background: rgba(10, 10, 20, 0.8);
+            margin: 0 auto;
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
             padding: 10px;
-            border-radius: 10px;
-            display: inline-block;
-            margin-bottom: 15px;
-            border: 1px solid #444;
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
         }
-        .exchange-btn {
-            background-color: #3498db;
-            color: white;
-            font-size: 0.9em;
-            padding: 5px 10px;
-            margin: 0 5px;
-            border-radius: 4px;
+        
+        .finish-line {
+            position: absolute; right: 50px; top: 0; bottom: 0; width: 4px;
+            background: repeating-linear-gradient(0deg, #fff, #fff 10px, transparent 10px, transparent 20px);
+            z-index: 1;
+            box-shadow: 0 0 10px white;
         }
-        .exchange-btn:hover { background-color: #2980b9; }
 
-        /* 중계창 */
-        #msg { margin-top: 5px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; min-height: 24px; color: #bdc3c7; font-size: 0.95em; }
-        
-        /* 컨트롤 패널 */
-        .controls { margin: 10px 0; background: #222; padding: 15px; border-radius: 10px; display: inline-block; border: 1px solid #f1c40f; }
-        select, input, button { padding: 10px; font-size: 15px; margin: 3px; border-radius: 5px; border: none; outline: none; }
-        button { background-color: #e74c3c; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px #c0392b; }
-        button:active { box-shadow: 0 2px #c0392b; transform: translateY(2px); }
-        button:disabled { background-color: #555; box-shadow: none; cursor: not-allowed; }
-        
-        /* 트랙 스타일 */
-        .track-container { width: 95%; max-width: 800px; background-color: #2ecc71; margin: 0 auto; border: 6px solid #145a32; border-radius: 10px; padding: 5px 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
-        .finish-line { position: absolute; right: 40px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #fff, #fff 10px, #000 10px, #000 20px); z-index: 1; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-        .lane { height: 90px; border-bottom: 2px dashed rgba(255,255,255,0.3); position: relative; display: flex; align-items: center; }
+        .lane {
+            height: 90px;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            position: relative;
+            display: flex; align-items: center;
+        }
         .lane:last-child { border-bottom: none; }
 
-        .snail { position: absolute; left: 0; transition: left 0.05s linear; z-index: 2; width: 90px; height: 80px; }
+        /* 루미 캐릭터 */
+        .snail {
+            position: absolute; left: 0; transition: left 0.05s linear; z-index: 2;
+            width: 80px; height: auto;
+        }
         .snail img {
             width: 100%; height: auto;
-            position: absolute; top: 0; left: 0; 
-            filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.3));
-            transform: scaleX(-1); 
+            position: absolute; top: 0; left: 0;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+            transform: scaleX(-1); /* 오른쪽 보기 */
         }
+        
+        /* 애니메이션 프레임 제어 */
         .frame1 { display: block; }
         .frame2 { display: none; }
 
-        .bubble { position: absolute; top: -15px; left: 15px; font-size: 11px; background: white; color: black; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; font-weight: bold; z-index: 3; box-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
-        .lane-info { position: absolute; left: 5px; top: 2px; font-size: 12px; color: rgba(255,255,255,0.8); text-shadow: 1px 1px 1px black; z-index: 0; }
-        
+        /* 말풍선 & 정보 */
+        .bubble {
+            position: absolute; top: -20px; left: 10px;
+            font-size: 0.7rem; background: white; color: black;
+            padding: 2px 6px; border-radius: 4px; opacity: 0;
+            transition: opacity 0.2s; pointer-events: none; font-weight: bold;
+            z-index: 3;
+        }
+        .lane-info {
+            position: absolute; left: 10px; top: 5px;
+            font-size: 0.8rem; color: rgba(255,255,255,0.3);
+            font-weight: bold; z-index: 0;
+        }
+
+        /* 우승 효과 */
         .winner { z-index: 10; }
-        .winner img { transform: scaleX(-1) scale(1.3) rotate(-10deg) !important; filter: drop-shadow(0 0 15px gold); }
-        
-        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+        .winner img { 
+            transform: scaleX(-1) scale(1.2) rotate(-10deg) !important; 
+            filter: drop-shadow(0 0 20px gold); 
+        }
+
+        /* 메시지 창 */
+        #msg {
+            margin-top: 15px; padding: 10px;
+            border-radius: 8px; min-height: 24px;
+            color: var(--text-sub); font-size: 0.95em;
+            background: rgba(0,0,0,0.3);
+        }
+
+        /* 환전소 박스 */
+        .exchange-box {
+            margin-top: 10px; margin-bottom: 20px;
+            padding: 10px; border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            display: inline-block;
+        }
+
+        /* 폭죽 캔버스 */
+        #confetti {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999;
+        }
     </style>
 </head>
 <body>
 
     <canvas id="confetti"></canvas>
-    <audio id="bgm" src="../../sound/william.mp3" loop></audio>
+    <audio id="bgm" src="bgm.mp3" loop></audio>
 
-    <h1>🦊 RUMI CASINO RACE</h1>
+    <nav class="top-bar">
+        <a href="/" class="logo">🦊 JINDOSTAR</a>
+        <a href="/">메인으로</a>
+        <a href="board.html">게시판</a>
+        <a href="mypage.html" style="color:var(--accent);">마이페이지</a>
+    </nav>
 
-    <div class="dashboard">
-        <div class="status-board">
-            <span class="label">MY CASH (KRW)</span>
-            <span id="money" class="balance money">100,000</span> 원
-        </div>
-        <div class="status-board" style="border-color: #f1c40f;">
-            <span class="label">GAME TOKEN</span>
-            🪙 <span id="token" class="balance token">0</span> 개
-        </div>
-    </div>
+    <div class="container">
+        <h1>RUMI RACING</h1>
+        <p style="color:var(--text-sub); margin-bottom:30px;">당신의 운을 시험하세요. 우주에서 가장 빠른 여우는 누구?</p>
 
-    <div class="exchange-box">
-        <span style="font-size:0.9em; color:#ddd; margin-right:10px;">🏦 환전소 (1토큰 = 1,000원)</span>
-        <button class="exchange-btn" onclick="buyToken(1)">1개 구매</button>
-        <button class="exchange-btn" onclick="buyToken(10)">10개 구매</button>
-        <button class="exchange-btn" onclick="buyToken(50)">50개 구매</button>
-    </div>
-    
-    <div id="msg">토큰을 구매해서 배팅하세요!</div>
-
-    <div class="controls">
-        <select id="snailSelect">
-            <option value="0">🔴 1번 루미 (x1.25) - 정배</option>
-            <option value="1">🔵 2번 루미 (x2.0) - 다크호스</option>
-            <option value="2">🟢 3번 루미 (x3.0) - 인생역전</option>
-        </select>
-        <input type="number" id="betAmount" min="1" step="1" value="1" placeholder="배팅 토큰">
-        <button id="startBtn" onclick="startRace()">배팅하기 (토큰)</button>
-    </div>
-
-    <div class="track-container">
-        <div class="finish-line"></div>
-        
-        <div class="lane">
-            <span class="lane-info">1번 (x1.25)</span>
-            <div class="snail" id="snail0">
-                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
-                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
-                <div class="bubble" id="bubble0"></div>
+        <div class="dashboard">
+            <div class="hud-box">
+                <span class="label">MY CASH</span>
+                <span id="money" class="balance money">Loading...</span> <span style="font-size:0.8em; color:#666;">KRW</span>
+            </div>
+            <div class="hud-box" style="border-color: #ffd700;">
+                <span class="label">GAME TOKEN</span>
+                🪙 <span id="token" class="balance token">Loading...</span>
             </div>
         </div>
-        <div class="lane">
-            <span class="lane-info">2번 (x2.0)</span>
-            <div class="snail" id="snail1">
-                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
-                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
-                <div class="bubble" id="bubble1"></div>
+
+        <div class="exchange-box">
+            <span style="font-size:0.9em; color:#aaa; margin-right:10px;">🏦 TOKEN EXCHANGE (1T = 1,000₩)</span>
+            <button class="btn btn-exchange" onclick="buyToken(1)">1개 구매</button>
+            <button class="btn btn-exchange" onclick="buyToken(10)">10개 구매</button>
+            <button class="btn btn-exchange" onclick="buyToken(50)">50개 구매</button>
+        </div>
+
+        <div id="msg">토큰을 구매하여 배팅하세요.</div>
+
+        <div class="control-panel">
+            <div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap;">
+                <select id="snailSelect">
+                    <option value="0">🔴 1번 루미 (x1.25) - 정배</option>
+                    <option value="1">🔵 2번 루미 (x2.0) - 다크호스</option>
+                    <option value="2">🟢 3번 루미 (x3.0) - 인생역전</option>
+                </select>
+                <input type="number" id="betAmount" min="1" step="1" value="1" placeholder="토큰 수량" style="width:100px;">
+                <button id="startBtn" class="btn" onclick="startRace()">RACE START</button>
             </div>
         </div>
-        <div class="lane">
-            <span class="lane-info">3번 (x3.0)</span>
-            <div class="snail" id="snail2">
-                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
-                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
-                <div class="bubble" id="bubble2"></div>
+
+        <div class="track-container">
+            <div class="finish-line"></div>
+            
+            <div class="lane">
+                <span class="lane-info">LANE 01 (x1.25)</span>
+                <div class="snail" id="snail0">
+                    <img src="rumi.png" class="frame1" alt="run1">
+                    <img src="rumi1.png" class="frame2" alt="run2">
+                    <div class="bubble" id="bubble0"></div>
+                </div>
+            </div>
+            <div class="lane">
+                <span class="lane-info">LANE 02 (x2.0)</span>
+                <div class="snail" id="snail1">
+                    <img src="rumi.png" class="frame1" alt="run1">
+                    <img src="rumi1.png" class="frame2" alt="run2">
+                    <div class="bubble" id="bubble1"></div>
+                </div>
+            </div>
+            <div class="lane">
+                <span class="lane-info">LANE 03 (x3.0)</span>
+                <div class="snail" id="snail2">
+                    <img src="rumi.png" class="frame1" alt="run1">
+                    <img src="rumi1.png" class="frame2" alt="run2">
+                    <div class="bubble" id="bubble2"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ★ 변수 분리: 현금(money)과 토큰(token)
-        let money = 100000;
-        let token = 0;
-        let isRacing = false;
-        let runInterval; 
+        // =================================================
+        // [필수] 본인의 Supabase 키 (다른 파일과 동일하게 설정)
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        // =================================================
         
-        const TOKEN_PRICE = 1000; // 1토큰 = 1000원
+        // wallet.js가 로드되어 있다면 거기서 client를 쓸 수도 있지만, 
+        // 확실한 작동을 위해 여기서도 초기화 (wallet.js 내부 변수명과 충돌 주의, 여기선 window.supabaseClient로 사용)
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+        let isRacing = false;
+        let runInterval;
+        
         const snails = [ document.getElementById('snail0'), document.getElementById('snail1'), document.getElementById('snail2') ];
         const bubbles = [ document.getElementById('bubble0'), document.getElementById('bubble1'), document.getElementById('bubble2') ];
         const msg = document.getElementById('msg');
@@ -164,71 +310,61 @@
         
         const odds = [1.25, 2.0, 3.0]; 
         const baseSpeed = [0.5, 0.5, 0.5]; 
-        
         const comments = [ "치열합니다!", "누가 이길지 몰라요!", "막판 스퍼트?!", "엄청난 속도입니다!", "땀을 쥐게 하네요!"];
 
-        // UI 업데이트 함수
-        function updateUI() {
-            document.getElementById('money').innerText = money.toLocaleString();
-            document.getElementById('token').innerText = token.toLocaleString();
-        }
-
-        // ★ 환전 함수 (Cash -> Token)
-        function buyToken(amount) {
-            if (isRacing) {
-                alert("경기 중에는 환전할 수 없습니다.");
-                return;
-            }
-            const cost = amount * TOKEN_PRICE;
-            if (money >= cost) {
-                money -= cost;
-                token += amount;
-                updateUI();
-                msg.innerText = `✅ 토큰 ${amount}개를 구매했습니다.`;
-                msg.style.color = "#2ecc71";
-            } else {
-                alert("현금이 부족합니다!");
-            }
-        }
-
+        // UI 업데이트는 wallet.js의 updateGlobalUI가 담당하지만, 
+        // 여기서도 즉시 반응을 위해 보조 함수 사용 가능
         function showBubble(index, text) {
             bubbles[index].innerText = text;
             bubbles[index].style.opacity = 1;
             setTimeout(() => { bubbles[index].style.opacity = 0; }, 800);
         }
 
-        function startRace() {
+        // 1. 환전 기능 (wallet.js의 buyTokenDB 호출)
+        async function buyToken(amount) {
+            if (isRacing) return alert("경기 중에는 환전할 수 없습니다.");
+            if (typeof buyTokenDB === 'function') {
+                await buyTokenDB(amount);
+            } else {
+                alert("지갑 시스템(wallet.js)이 로드되지 않았습니다.");
+            }
+        }
+
+        // 2. 게임 시작
+        async function startRace() {
             if (isRacing) return;
 
             const betAmount = parseInt(document.getElementById('betAmount').value);
             const selectedSnail = parseInt(document.getElementById('snailSelect').value);
             const startBtn = document.getElementById('startBtn');
 
-            // ★ 배팅 검증 로직 변경 (돈 대신 토큰 확인)
-            if (betAmount > token) {
-                alert("토큰이 부족합니다! 환전소에서 구매해주세요.");
-                return;
-            }
-            if (betAmount <= 0 || isNaN(betAmount)) {
-                alert("올바른 배팅 개수를 입력하세요.");
-                return;
-            }
+            if (betAmount <= 0 || isNaN(betAmount)) return alert("올바른 수량을 입력하세요.");
 
-            // 음악 재생
-            bgm.volume = 0.5; 
-            bgm.currentTime = 0; 
-            bgm.play().catch(e => console.log("bgm.mp3 필요"));
-
-            isRacing = true;
+            // [Supabase] 토큰 차감 시도 (wallet.js 함수 사용)
+            if (typeof updateBalance !== 'function') return alert("지갑 시스템 오류");
+            
+            // UI 먼저 비활성화
             startBtn.disabled = true;
             
-            // ★ 토큰 차감
-            token -= betAmount;
-            updateUI();
+            // DB 차감 요청
+            const success = await updateBalance('token', -betAmount);
+            if (!success) {
+                startBtn.disabled = false;
+                alert("토큰이 부족합니다!");
+                return;
+            }
 
-            msg.innerText = "🚨 경기 시작! 출발합니다!";
-            msg.style.color = "#bdc3c7";
+            // 게임 시작 처리
+            isRacing = true;
+            msg.innerText = "🚨 경기 시작! 행운을 빕니다!";
+            msg.style.color = "var(--text-main)";
             
+            // 음악 재생 (크롬 정책상 사용자 인터랙션 후 재생 가능)
+            bgm.volume = 0.5; 
+            bgm.currentTime = 0; 
+            bgm.play().catch(e => console.log("음악 재생 실패 (브라우저 정책)"));
+
+            // 초기화
             let positions = [0, 0, 0];
             snails.forEach(s => {
                 s.style.left = '0%';
@@ -238,6 +374,7 @@
             });
             stopConfetti();
 
+            // 달리기 애니메이션 (스프라이트 교체)
             let toggle = false;
             runInterval = setInterval(() => {
                 toggle = !toggle;
@@ -250,13 +387,15 @@
                         s.querySelector('.frame2').style.display = 'none';
                     }
                 });
-            }, 120);
+            }, 100);
 
+            // 당일 컨디션 난수
             let raceCondition = [0, 0, 0];
             for(let i=0; i<3; i++) raceCondition[i] = (Math.random() * 0.35) - 0.15;
 
             let commentTick = 0;
 
+            // 메인 루프
             const raceInterval = setInterval(() => {
                 let winner = -1;
                 commentTick++;
@@ -266,14 +405,18 @@
                 }
 
                 for (let i = 0; i < 3; i++) {
+                    // 미끄러짐
                     if (Math.random() < 0.02) { showBubble(i, "삐끗!💦"); continue; }
                     
                     let move = baseSpeed[i] + (Math.random() * 0.5) + raceCondition[i];
+                    
+                    // 뒤처짐 보정
                     if (positions[i] < Math.max(...positions) - 15) move += 0.2; 
 
+                    // 막판 스퍼트 로직 (배당률 낮은 애가 유리하게)
                     if (positions[i] > 85) {
-                        if (i === 0) { move += 0.3; } 
-                        else if (i === 1) { move += 0.1; }
+                        if (i === 0) { move += 0.3; } // 1.25배
+                        else if (i === 1) { move += 0.1; } // 2.0배
                     }
 
                     positions[i] += move;
@@ -289,14 +432,15 @@
             }, 50);
         }
 
-        function endRace(winner, selectedSnail, betAmount) {
+        // 3. 게임 종료
+        async function endRace(winner, selectedSnail, betAmount) {
             const startBtn = document.getElementById('startBtn');
             const names = ["1번 루미", "2번 루미", "3번 루미"];
 
             clearInterval(runInterval);
             bgm.pause(); 
-            bgm.currentTime = 0;
             
+            // 모든 루미 정지 모션
             snails.forEach(s => {
                 s.querySelector('.frame1').style.display = 'block';
                 s.querySelector('.frame2').style.display = 'none';
@@ -304,49 +448,68 @@
 
             snails[winner].classList.add('winner');
 
+            let payout = 0;
             if (winner === selectedSnail) {
-                // ★ 당첨금 지급 (토큰으로 지급)
-                // 소수점 버림 (Math.floor)
-                const payout = Math.floor(betAmount * odds[selectedSnail]);
-                token += payout;
-                updateUI();
+                payout = Math.floor(betAmount * odds[selectedSnail]);
                 
-                msg.innerHTML = `🎉 <b>적중!</b> ${names[winner]} 승리! <span style="color:#f1c40f;">+${payout} 토큰 획득</span>`;
-                msg.style.color = "#2ecc71";
+                // [Supabase] 당첨금 지급 요청
+                await updateBalance('token', payout);
+                
+                msg.innerHTML = `🎉 <b style="color:var(--win-color)">WIN!</b> ${names[winner]} 우승! <span style="color:gold;">+${payout} T</span>`;
                 startConfetti(); 
             } else {
-                msg.innerHTML = `💀 <b>패배...</b> 우승은 ${names[winner]} 입니다.`;
-                msg.style.color = "#e74c3c";
+                msg.innerHTML = `💀 <b style="color:var(--lose-color)">LOSE...</b> 우승: ${names[winner]}`;
+            }
+
+            // 게임 로그 저장 (game_logs 테이블)
+            const { data: { user } } = await client.auth.getUser();
+            if (user) {
+                await client.from('game_logs').insert({
+                    user_id: user.id,
+                    game_name: '루미 레이싱',
+                    bet_amount: betAmount,
+                    result_amount: payout
+                });
             }
 
             isRacing = false;
             startBtn.disabled = false;
-            startBtn.innerText = "다시 배팅하기";
+            startBtn.innerText = "다시 하기";
         }
 
-        /* 폭죽 효과 */
+        /* 폭죽 효과 (Confetti) */
         const canvas = document.getElementById('confetti');
         const ctx = canvas.getContext('2d');
         let particles = [];
         let animationId;
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        
         function createParticle() {
-            const x = Math.random() * canvas.width; const y = -10; const size = Math.random() * 10 + 5;
-            const color = `hsl(${Math.random() * 360}, 100%, 50%)`; const speedY = Math.random() * 3 + 2; const speedX = Math.random() * 4 - 2;
+            const x = Math.random() * canvas.width; const y = -10; const size = Math.random() * 8 + 4;
+            const color = `hsl(${Math.random() * 360}, 100%, 70%)`; 
+            const speedY = Math.random() * 3 + 2; const speedX = Math.random() * 4 - 2;
             particles.push({x, y, size, color, speedX, speedY});
         }
+        
         function updateConfetti() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach((p, index) => {
-                p.y += p.speedY; p.x += p.speedX; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
+                p.y += p.speedY; p.x += p.speedX; 
+                ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
                 if (p.y > canvas.height) particles.splice(index, 1);
             });
             if (particles.length < 100) createParticle(); 
             animationId = requestAnimationFrame(updateConfetti);
         }
+        
         function startConfetti() { if (!animationId) updateConfetti(); }
-        function stopConfetti() { cancelAnimationFrame(animationId); animationId = null; ctx.clearRect(0, 0, canvas.width, canvas.height); particles = []; }
+        function stopConfetti() { 
+            if (animationId) cancelAnimationFrame(animationId); 
+            animationId = null; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            particles = []; 
+        }
     </script>
 </body>
 </html>

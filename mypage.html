@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - 마이 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 🌌 [Deep Space Design System] */
+        :root {
+            --bg-deep: #050510;
+            --bg-card: rgba(20, 20, 35, 0.6);
+            --accent: #00d4ff;       /* 네온 시안 */
+            --accent-glow: rgba(0, 212, 255, 0.4);
+            --glass-bg: rgba(20, 20, 35, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+            --win-color: #00ff9d;
+            --lose-color: #ff4f6d;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            /* 우주 배경 효과 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 상단 네비게이션 */
+        .top-bar {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            display: flex; gap: 15px; align-items: center;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .top-bar a { text-decoration: none; color: var(--text-sub); transition: 0.3s; }
+        .top-bar a:hover { color: var(--accent); }
+        .logo { font-weight: 900; color: var(--accent); letter-spacing: 1px; margin-right: 20px; }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 900px;
+            margin: 100px auto 50px auto;
+            padding: 0 20px;
+        }
+
+        /* 카드 공통 스타일 */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        /* 카드 상단 네온 바 효과 */
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .card h2 { 
+            margin-top: 0; margin-bottom: 20px;
+            color: var(--accent); font-size: 1.5rem; 
+            text-shadow: 0 0 10px var(--accent-glow);
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+
+        /* 자산 대시보드 */
+        .wallet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .asset-box {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            transition: 0.3s;
+        }
+        .asset-box:hover { border-color: var(--accent); transform: translateY(-3px); }
+        
+        .asset-label { display: block; font-size: 0.9em; color: var(--text-sub); margin-bottom: 10px; }
+        .asset-value { font-size: 2rem; font-weight: bold; }
+        .money { color: var(--win-color); text-shadow: 0 0 10px rgba(0, 255, 157, 0.3); }
+        .token { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+
+        /* 환전소 버튼 */
+        .exchange-controls {
+            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;
+        }
+        .exchange-btn {
+            background: linear-gradient(135deg, #006eff, #00d4ff);
+            color: black; border: none; padding: 12px 25px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-family: inherit; font-size: 1rem;
+            transition: 0.3s; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+        .exchange-btn:hover { 
+            transform: translateY(-2px); box-shadow: 0 0 25px var(--accent-glow); color: white;
+        }
+
+        /* 전적 리스트 테이블 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { 
+            text-align: left; padding: 15px; 
+            color: var(--accent); font-size: 0.9rem; 
+            border-bottom: 2px solid var(--glass-border);
+        }
+        td { 
+            padding: 15px; border-bottom: 1px solid var(--glass-border); 
+            color: var(--text-main); font-size: 0.95rem;
+        }
+        tr:hover td { background: rgba(255,255,255,0.05); }
+        
+        .win { color: var(--win-color); font-weight: bold; }
+        .lose { color: var(--lose-color); }
+        .empty-msg { text-align: center; color: var(--text-sub); padding: 40px; }
+
+        /* 모바일 대응 */
+        @media (max-width: 600px) {
+            .wallet-grid { grid-template-columns: 1fr; }
+            .exchange-controls { flex-direction: column; }
+            th, td { padding: 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-bar">
+        <a href="/" class="logo">🦊 JINDOSTAR</a>
+        <a href="/">메인으로</a>
+        <a href="game.html">게임하기</a> <a href="#" style="color:var(--accent);">마이페이지</a>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>내 지갑 (MY WALLET)</h2>
+            <div class="wallet-grid">
+                <div class="asset-box">
+                    <span class="asset-label">보유 현금 (KRW)</span>
+                    <span id="my-money" class="asset-value money">Loading...</span>
+                </div>
+                <div class="asset-box">
+                    <span class="asset-label">보유 토큰 (TOKEN)</span>
+                    <span id="my-token" class="asset-value token">Loading...</span> 🪙
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>토큰 환전소 (EXCHANGE)</h2>
+            <p style="color:var(--text-sub); text-align:center;">1 TOKEN = 1,000 KRW</p>
+            <div class="exchange-controls">
+                <button class="exchange-btn" onclick="buyToken(10)">10개 (1만원)</button>
+                <button class="exchange-btn" onclick="buyToken(50)">50개 (5만원)</button>
+                <button class="exchange-btn" onclick="buyToken(100)">100개 (10만원)</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>최근 게임 기록 (HISTORY)</h2>
+            <div style="overflow-x: auto;">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>GAME</th>
+                            <th>BET</th>
+                            <th>RESULT</th>
+                            <th>TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-list">
+                        </tbody>
+                </table>
+            </div>
+            <div id="empty-history" class="empty-msg" style="display:none;">아직 기록된 게임이 없습니다.</div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================
+        // [필수] 본인의 Supabase 키로 교체하세요!
+        // =================================================
+        const SUPABASE_URL = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        // =================================================
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 1. 내 정보 불러오기
+        async function loadMyPage() {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                if(confirm("로그인이 필요합니다. 메인으로 이동하시겠습니까?")) {
+                    location.href = 'index.html';
+                }
+                return;
+            }
+
+            // 지갑 정보 조회
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('money, token')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                document.getElementById('my-money').innerText = profile.money.toLocaleString();
+                document.getElementById('my-token').innerText = profile.token.toLocaleString();
+            }
+
+            // 전적 기록 조회
+            loadHistory(user.id);
+        }
+
+        // 2. 전적 기록 불러오기 함수
+        async function loadHistory(userId) {
+            const { data: logs, error } = await supabase
+                .from('game_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false }) // 최신순 정렬
+                .limit(10); // 최근 10개만
+
+            const list = document.getElementById('history-list');
+            const emptyMsg = document.getElementById('empty-history');
+            list.innerHTML = '';
+
+            if (!logs || logs.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                
+                // 승패 여부 스타일링
+                let resultText = '';
+                if (log.result_amount > 0) {
+                    resultText = `<span class="win">+${log.result_amount} 🪙</span>`;
+                } else {
+                    resultText = `<span class="lose">-${log.bet_amount} 꽝</span>`;
+                }
+
+                // 날짜 포맷팅 (MM/DD HH:mm)
+                const date = new Date(log.created_at);
+                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()}`;
+
+                row.innerHTML = `
+                    <td style="color:white; font-weight:bold;">${log.game_name}</td>
+                    <td>${log.bet_amount.toLocaleString()}</td>
+                    <td>${resultText}</td>
+                    <td style="color:var(--text-sub); font-size:0.8em;">${dateStr}</td>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // 3. 환전 함수 (RPC 호출)
+        async function buyToken(count) {
+            const { error } = await supabase.rpc('exchange_token', { count: count });
+            if (error) {
+                alert("현금이 부족하거나 오류가 발생했습니다.");
+            } else {
+                alert(`✅ 토큰 ${count}개 구매 완료!`);
+                loadMyPage(); // 화면 갱신
+            }
+        }
+
+        // 페이지 로드 시 실행
+        loadMyPage();
+    </script>
+
+</body>
+</html>
