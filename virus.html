@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>RUMI: Hive Mind</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ☣️ [HACKER / HIVE THEME] */
+        :root {
+            --bg: #0a0a10;
+            --primary: #00ffcc; /* 민트색 (해커 느낌) */
+            --secondary: #ff00ff; /* 마젠타 */
+            --panel-bg: rgba(0, 20, 20, 0.8);
+            --border: rgba(0, 255, 204, 0.3);
+        }
+
+        body {
+            background: var(--bg); color: var(--primary);
+            font-family: 'Courier New', monospace;
+            margin: 0; padding: 0; min-height: 100vh;
+            overflow-x: hidden;
+            transition: 0.5s;
+        }
+
+        /* 격자무늬 배경 */
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.1; z-index: -1;
+        }
+
+        .container {
+            max-width: 700px; margin: 0 auto; padding: 20px;
+            text-align: center; position: relative; z-index: 10;
+        }
+
+        h1 { 
+            text-transform: uppercase; letter-spacing: 3px; 
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        /* 🦠 루미 케이지 */
+        .pet-cage {
+            width: 200px; height: 200px; margin: 20px auto;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, rgba(0,255,204,0.1) 0%, #000 70%);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .rumi-visual { font-size: 5rem; filter: drop-shadow(0 0 10px var(--primary)); user-select: none; transition:0.2s;}
+
+        /* UI 요소 */
+        .stats-panel {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: var(--panel-bg); border: 1px solid var(--border);
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            font-size: 0.9rem; text-align: left;
+        }
+
+        .bar-container { width: 100%; background: #222; height: 8px; margin-top: 5px; border-radius: 4px; overflow:hidden; }
+        .bar-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.3s; }
+
+        /* 버튼 스타일 */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        button {
+            background: rgba(0,0,0,0.5); color: var(--primary); 
+            border: 1px solid var(--primary); padding: 15px; 
+            font-family: inherit; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; transition: 0.2s; border-radius: 4px;
+        }
+        button:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
+        button:active { transform: scale(0.95); }
+
+        .btn-spread { color: var(--secondary); border-color: var(--secondary); }
+        .btn-spread:hover { background: var(--secondary); color: white; box-shadow: 0 0 15px var(--secondary); }
+
+        /* 🏆 랭킹 보드 (Lv.4 전용) */
+        #leaderboard-section {
+            display: none; /* 기본 숨김 */
+            background: rgba(0,0,0,0.8); border: 1px solid var(--secondary);
+            padding: 20px; border-radius: 8px; margin-top: 20px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+
+        .rank-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top:10px; }
+        .rank-table th { text-align: left; color: #aaa; border-bottom: 1px solid #555; padding: 5px; }
+        .rank-table td { padding: 8px 5px; border-bottom: 1px solid #222; }
+        .rank-row:nth-child(1) { color: gold; font-weight: bold; } /* 1등 */
+        .rank-row:nth-child(2) { color: silver; } /* 2등 */
+        .rank-row:nth-child(3) { color: #cd7f32; } /* 3등 */
+
+        /* --- 단계별 효과 --- */
+        .stage-4 .pet-cage { border-color: var(--secondary); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% {box-shadow: 0 0 10px var(--secondary);} 50% {box-shadow: 0 0 30px var(--secondary);} 100% {box-shadow: 0 0 10px var(--secondary);} }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>RUMI NETWORK</h1>
+        <div style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">
+            NODE STATUS: <span id="status-text">CONNECTING...</span>
+        </div>
+
+        <div class="pet-cage">
+            <div class="rumi-visual" id="rumi-face">🥚</div>
+        </div>
+
+        <div class="stats-panel">
+            <div>👤 NODE ID: <span id="host-name" style="color:white;">-</span></div>
+            <div>🧬 STAGE: <span id="level-name">Loading...</span></div>
+            
+            <div style="grid-column: span 2; margin-top:10px;">
+                DATA MINED (EXP): <span id="exp-val">0</span>
+                <div class="bar-container"><div class="bar-fill" id="exp-bar"></div></div>
+            </div>
+            
+            <div style="grid-column: span 2; margin-top:5px; color:var(--secondary);">
+                ☣️ INFECTED SYSTEMS: <span id="infect-val">0</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button id="action-btn" onclick="feedRumi()">💾 MINE DATA</button>
+            <button class="btn-spread" onclick="spreadVirus()">🔗 SPREAD VIRUS</button>
+        </div>
+
+        <div id="leaderboard-section">
+            <h3 style="margin:0; color:var(--secondary);">🏆 GLOBAL HACKER RANKING</h3>
+            <p style="font-size:0.8rem; color:#aaa;">Top Infectors in the JindoStar Universe</p>
+            
+            <table class="rank-table">
+                <thead>
+                    <tr>
+                        <th width="10%">#</th>
+                        <th width="40%">HACKER</th>
+                        <th width="25%">INFECTED</th>
+                        <th width="25%">DATA(EXP)</th>
+                    </tr>
+                </thead>
+                <tbody id="rank-list">
+                    </tbody>
+            </table>
+            <button style="width:100%; margin-top:10px; font-size:0.8rem; padding:8px;" onclick="loadLeaderboard()">🔄 REFRESH RANKING</button>
+        </div>
+
+        <div id="console-log" style="text-align:left; font-size:0.75rem; color:#555; height:80px; overflow-y:auto; border-top:1px solid #333; padding-top:5px;">
+            > Connecting to Hive Mind...
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let myId = localStorage.getItem('rumi_virus_id');
+        let virusData = null;
+
+        const STAGE_INFO = {
+            1: { name: "LV.1 Egg", maxExp: 30, icon: "🥚", msg: "Dormant" },
+            2: { name: "LV.2 Larva", maxExp: 80, icon: "🐛", msg: "Waking Up" },
+            3: { name: "LV.3 Pupa", maxExp: 200, icon: "🧬", msg: "Mutating..." },
+            4: { name: "LV.4 MASTER", maxExp: 999999, icon: "👑🦊", msg: "RULER OF THE NET" }
+        };
+
+        window.onload = async () => {
+            // 1. 전염 로직
+            const params = new URLSearchParams(window.location.search);
+            const hostId = params.get('host');
+
+            if (hostId && hostId !== myId) {
+                // RPC 없이 안전하게 업데이트
+                const { data: host } = await client.from('rumi_virus').select('infection_count, exp').eq('id', hostId).single();
+                if(host) {
+                    await client.from('rumi_virus').update({ 
+                        infection_count: host.infection_count + 1,
+                        exp: host.exp + 50 // 전염시 대량의 경험치
+                    }).eq('id', hostId);
+                    log(`⚠️ Connected to Host Node: ${hostId.substring(0,4)}...`);
+                }
+            }
+
+            // 2. 내 데이터 로드
+            if (!myId) {
+                const nick = prompt("INITIATE: Enter Hacker Codename:", "Guest" + Math.floor(Math.random()*1000));
+                const { data } = await client.from('rumi_virus').insert({ host_name: nick || 'Anon' }).select().single();
+                myId = data.id;
+                localStorage.setItem('rumi_virus_id', myId);
+                virusData = data;
+            } else {
+                const { data } = await client.from('rumi_virus').select('*').eq('id', myId).single();
+                virusData = data;
+            }
+
+            if(!virusData) { localStorage.removeItem('rumi_virus_id'); window.location.reload(); return; }
+
+            render();
+        };
+
+        async function feedRumi() {
+            if(!virusData) return;
+
+            // Lv.4에서는 클릭당 점수가 더 많이 오름 (미니게임 효과)
+            let bonus = (virusData.level === 4) ? Math.floor(Math.random() * 10) + 5 : Math.floor(Math.random() * 3) + 1;
+            virusData.exp += bonus;
+
+            // 레벨업 체크 (Lv.4 미만만)
+            if (virusData.level < 4 && virusData.exp >= STAGE_INFO[virusData.level].maxExp) {
+                virusData.level++;
+                virusData.exp = 0;
+                alert("⚠️ SYSTEM UPGRADE! Level Up!");
+            }
+
+            await client.from('rumi_virus').update({ exp: virusData.exp, level: virusData.level }).eq('id', myId);
+            
+            render();
+            
+            // 클릭 이펙트
+            const icon = document.getElementById('rumi-face');
+            icon.style.transform = "scale(0.9)";
+            setTimeout(() => icon.style.transform = "scale(1)", 100);
+        }
+
+        function spreadVirus() {
+            const link = `${window.location.origin}${window.location.pathname}?host=${myId}`;
+            navigator.clipboard.writeText(link).then(() => alert("🔗 VIRUS LINK COPIED!\nSpread this link to increase your INFECTION RANK!"));
+        }
+
+        // 화면 그리기
+        function render() {
+            const info = STAGE_INFO[virusData.level];
+            document.getElementById('host-name').innerText = virusData.host_name;
+            document.getElementById('level-name').innerText = info.name;
+            document.getElementById('status-text').innerText = info.msg;
+            document.getElementById('rumi-face').innerText = info.icon;
+            document.getElementById('infect-val').innerText = virusData.infection_count;
+            document.getElementById('exp-val').innerText = virusData.exp;
+
+            // 경험치 바
+            let max = (virusData.level === 4) ? 5000 : info.maxExp; // 만렙은 바가 천천히 참
+            let pct = Math.min(100, (virusData.exp / max) * 100);
+            document.getElementById('exp-bar').style.width = pct + "%";
+
+            // Lv.4 도달 시 랭킹판 공개
+            if (virusData.level === 4) {
+                document.body.classList.add('stage-4');
+                document.getElementById('leaderboard-section').style.display = 'block';
+                document.getElementById('action-btn').innerText = "⛏️ HACK & MINE"; // 버튼 이름 변경
+                loadLeaderboard(); // 랭킹 로드
+            }
+        }
+
+        // 🏆 랭킹 불러오기 (전염 수 기준 내림차순)
+        async function loadLeaderboard() {
+            const { data } = await client
+                .from('rumi_virus')
+                .select('host_name, infection_count, exp')
+                .order('infection_count', { ascending: false }) // 1순위: 전염 수
+                .order('exp', { ascending: false })             // 2순위: 채굴량
+                .limit(10);
+
+            const list = document.getElementById('rank-list');
+            list.innerHTML = '';
+
+            if(data) {
+                data.forEach((user, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'rank-row';
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${user.host_name}</td>
+                        <td style="color:var(--secondary); font-weight:bold;">${user.infection_count}</td>
+                        <td>${user.exp}</td>
+                    `;
+                    list.appendChild(row);
+                });
+            }
+        }
+
+        function log(msg) {
+            const box = document.getElementById('console-log');
+            box.innerHTML = `> ${msg}<br>` + box.innerHTML;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루미 레이싱 : 사운드 에디션</title>
+    <style>
+        /* 스타일은 기존과 동일 */
+        body { font-family: 'Pretendard', sans-serif; background-color: #1a1a1a; color: white; text-align: center; padding: 10px; overflow-x: hidden; }
+        h1 { margin-bottom: 10px; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
+        .status-board { background: linear-gradient(145deg, #2c3e50, #000); padding: 15px; border-radius: 15px; display: inline-block; border: 2px solid #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); margin-bottom: 15px; min-width: 320px; }
+        .balance { font-size: 1.8em; font-weight: bold; color: #f1c40f; }
+        #msg { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; min-height: 24px; color: #bdc3c7; font-size: 0.95em; }
+        
+        .controls { margin: 10px 0; background: #333; padding: 10px; border-radius: 10px; display: inline-block; }
+        select, input, button { padding: 10px; font-size: 15px; margin: 3px; border-radius: 5px; border: none; outline: none; }
+        button { background-color: #e74c3c; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px #c0392b; }
+        button:active { box-shadow: 0 2px #c0392b; transform: translateY(2px); }
+        button:disabled { background-color: #555; box-shadow: none; cursor: not-allowed; }
+        
+        .track-container { width: 95%; max-width: 800px; background-color: #2ecc71; margin: 0 auto; border: 6px solid #145a32; border-radius: 10px; padding: 5px 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
+        .finish-line { position: absolute; right: 40px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #fff, #fff 10px, #000 10px, #000 20px); z-index: 1; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        .lane { height: 90px; border-bottom: 2px dashed rgba(255,255,255,0.3); position: relative; display: flex; align-items: center; }
+        .lane:last-child { border-bottom: none; }
+
+        .snail { position: absolute; left: 0; transition: left 0.05s linear; z-index: 2; width: 90px; height: 80px; }
+        .snail img {
+            width: 100%; height: auto;
+            position: absolute; top: 0; left: 0; 
+            filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.3));
+            transform: scaleX(-1); 
+        }
+        .frame1 { display: block; }
+        .frame2 { display: none; }
+
+        .bubble { position: absolute; top: -15px; left: 15px; font-size: 11px; background: white; color: black; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; font-weight: bold; z-index: 3; box-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+        .lane-info { position: absolute; left: 5px; top: 2px; font-size: 12px; color: rgba(255,255,255,0.8); text-shadow: 1px 1px 1px black; z-index: 0; }
+        
+        .winner { z-index: 10; }
+        .winner img { transform: scaleX(-1) scale(1.3) rotate(-10deg) !important; filter: drop-shadow(0 0 15px gold); }
+        
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti"></canvas>
+    <audio id="bgm" src="../../sound/william.mp3" loop></audio>
+
+    <h1>🦊 RUMI SPEED RACE</h1>
+
+    <div class="status-board">
+        <div style="font-size:0.9em; color:#bbb;">CURRENT WALLET</div>
+        <span id="wallet" class="balance">10,000</span> KRW
+        <div id="msg">루미를 선택하고 대박을 노리세요!</div>
+    </div>
+
+    <div class="controls">
+        <select id="snailSelect">
+            <option value="0">🔴 1번 루미 (x1.25) - 정배</option>
+            <option value="1">🔵 2번 루미 (x2.0) - 다크호스</option>
+            <option value="2">🟢 3번 루미 (x3.0) - 인생역전</option>
+        </select>
+        <input type="number" id="betAmount" min="100" step="100" value="1000" placeholder="배팅금">
+        <button id="startBtn" onclick="startRace()">배팅하기</button>
+    </div>
+
+    <div class="track-container">
+        <div class="finish-line"></div>
+        
+        <div class="lane">
+            <span class="lane-info">1번 (x1.25)</span>
+            <div class="snail" id="snail0">
+                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
+                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
+                <div class="bubble" id="bubble0"></div>
+            </div>
+        </div>
+        <div class="lane">
+            <span class="lane-info">2번 (x2.0)</span>
+            <div class="snail" id="snail1">
+                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
+                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
+                <div class="bubble" id="bubble1"></div>
+            </div>
+        </div>
+        <div class="lane">
+            <span class="lane-info">3번 (x3.0)</span>
+            <div class="snail" id="snail2">
+                <img src="../../img/도박/달팽이 레이싱/rumi.png" class="frame1" alt="run1">
+                <img src="../../img/도박/달팽이 레이싱/rumi1.png" class="frame2" alt="run2">
+                <div class="bubble" id="bubble2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wallet = 10000;
+        let isRacing = false;
+        let runInterval; 
+        
+        const snails = [ document.getElementById('snail0'), document.getElementById('snail1'), document.getElementById('snail2') ];
+        const bubbles = [ document.getElementById('bubble0'), document.getElementById('bubble1'), document.getElementById('bubble2') ];
+        const msg = document.getElementById('msg');
+        const bgm = document.getElementById('bgm');
+        
+        const odds = [1.25, 2.0, 3.0]; 
+        const baseSpeed = [0.5, 0.5, 0.5]; 
+        
+        const comments = [ "치열합니다!", "누가 이길지 몰라요!", "막판 스퍼트?!", "엄청난 속도입니다!", "땀을 쥐게 하네요!"];
+
+        function updateWallet(amount) {
+            wallet += amount;
+            document.getElementById('wallet').innerText = wallet.toLocaleString();
+        }
+
+        function showBubble(index, text) {
+            bubbles[index].innerText = text;
+            bubbles[index].style.opacity = 1;
+            setTimeout(() => { bubbles[index].style.opacity = 0; }, 800);
+        }
+
+        function startRace() {
+            if (isRacing) return;
+
+            const betAmount = parseInt(document.getElementById('betAmount').value);
+            const selectedSnail = parseInt(document.getElementById('snailSelect').value);
+            const startBtn = document.getElementById('startBtn');
+
+            if (betAmount > wallet || betAmount <= 0 || isNaN(betAmount)) {
+                alert("돈이 부족하거나 잘못된 입력입니다.");
+                return;
+            }
+
+            // ★ 음악 재생 (시작할 때) ★
+            bgm.volume = 0.5; 
+            bgm.currentTime = 0; 
+            bgm.play().catch(e => console.log("bgm.mp3 파일 확인 필요"));
+
+            isRacing = true;
+            startBtn.disabled = true;
+            updateWallet(-betAmount);
+            msg.innerText = "🚨 경기 시작! 출발합니다!";
+            msg.style.color = "#bdc3c7";
+            
+            let positions = [0, 0, 0];
+            snails.forEach(s => {
+                s.style.left = '0%';
+                s.classList.remove('winner');
+                s.querySelector('.frame1').style.display = 'block';
+                s.querySelector('.frame2').style.display = 'none';
+            });
+            stopConfetti();
+
+            let toggle = false;
+            runInterval = setInterval(() => {
+                toggle = !toggle;
+                snails.forEach(s => {
+                    if (toggle) {
+                        s.querySelector('.frame1').style.display = 'none';
+                        s.querySelector('.frame2').style.display = 'block';
+                    } else {
+                        s.querySelector('.frame1').style.display = 'block';
+                        s.querySelector('.frame2').style.display = 'none';
+                    }
+                });
+            }, 120);
+
+            let raceCondition = [0, 0, 0];
+            for(let i=0; i<3; i++) raceCondition[i] = (Math.random() * 0.35) - 0.15;
+
+            let commentTick = 0;
+
+            const raceInterval = setInterval(() => {
+                let winner = -1;
+                commentTick++;
+
+                if(commentTick % 20 === 0) {
+                    msg.innerText = "📢 " + comments[Math.floor(Math.random() * comments.length)];
+                }
+
+                for (let i = 0; i < 3; i++) {
+                    if (Math.random() < 0.02) { showBubble(i, "삐끗!💦"); continue; }
+                    
+                    let move = baseSpeed[i] + (Math.random() * 0.5) + raceCondition[i];
+                    if (positions[i] < Math.max(...positions) - 15) move += 0.2; 
+
+                    if (positions[i] > 85) {
+                        if (i === 0) { move += 0.3; } 
+                        else if (i === 1) { move += 0.1; }
+                    }
+
+                    positions[i] += move;
+                    snails[i].style.left = positions[i] + '%';
+
+                    if (positions[i] >= 88) { winner = i; break; }
+                }
+
+                if (winner !== -1) {
+                    clearInterval(raceInterval);
+                    endRace(winner, selectedSnail, betAmount);
+                }
+            }, 50);
+        }
+
+        function endRace(winner, selectedSnail, betAmount) {
+            const startBtn = document.getElementById('startBtn');
+            const names = ["1번 루미", "2번 루미", "3번 루미"];
+
+            clearInterval(runInterval);
+            
+            // ★ 음악 정지 및 되감기 (게임 끝날 때) ★
+            bgm.pause(); 
+            bgm.currentTime = 0; // 다음 판을 위해 처음으로 되감기
+            
+            snails.forEach(s => {
+                s.querySelector('.frame1').style.display = 'block';
+                s.querySelector('.frame2').style.display = 'none';
+            });
+
+            snails[winner].classList.add('winner');
+
+            if (winner === selectedSnail) {
+                const payout = Math.floor(betAmount * odds[selectedSnail]);
+                updateWallet(payout);
+                msg.innerHTML = `🎉 <b>대박!</b> ${names[winner]} 우승! <span style="color:#f1c40f;">+${payout.toLocaleString()}원</span>`;
+                msg.style.color = "#2ecc71";
+                startConfetti(); 
+            } else {
+                msg.innerHTML = `💀 <b>패배...</b> 우승은 ${names[winner]} 입니다.`;
+                msg.style.color = "#e74c3c";
+            }
+
+            isRacing = false;
+            startBtn.disabled = false;
+            startBtn.innerText = "다시 배팅하기";
+        }
+
+        /* 폭죽 효과 */
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationId;
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        function createParticle() {
+            const x = Math.random() * canvas.width; const y = -10; const size = Math.random() * 10 + 5;
+            const color = `hsl(${Math.random() * 360}, 100%, 50%)`; const speedY = Math.random() * 3 + 2; const speedX = Math.random() * 4 - 2;
+            particles.push({x, y, size, color, speedX, speedY});
+        }
+        function updateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.y += p.speedY; p.x += p.speedX; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+            if (particles.length < 100) createParticle(); 
+            animationId = requestAnimationFrame(updateConfetti);
+        }
+        function startConfetti() { if (!animationId) updateConfetti(); }
+        function stopConfetti() { cancelAnimationFrame(animationId); animationId = null; ctx.clearRect(0, 0, canvas.width, canvas.height); particles = []; }
+    </script>
+</body>
+</html>

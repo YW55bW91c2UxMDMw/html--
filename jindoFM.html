@@ -143,107 +143,143 @@
         // =================================================
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
-        // =================================================
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 유튜브 & TTS 변수
+        // 전역 변수
         let player;
         let isPowerOn = false;
-        let synth = window.speechSynthesis;
+        const synth = window.speechSynthesis;
+        let radioChannel = null;
+        let lastPayload = ""; 
+        
+        // [중요] 목소리 고정 변수
+        let fixedVoice = null;
 
         // 1. 유튜브 API 준비
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '0', width: '0',
-                videoId: '', // 초기값 없음
+                videoId: '',
                 events: { 'onReady': onPlayerReady }
             });
         }
         function onPlayerReady(event) { console.log("Youtube Ready"); }
 
-        // 2. 전원 켜기 (청취 시작)
+        // 2. [핵심] 목소리 미리 로드 및 고정 (서로 다른 목소리 방지)
+        function setVoice() {
+            const voices = synth.getVoices();
+            if (voices.length === 0) return;
+
+            // 1순위: Google 한국어 / 2순위: 아무 한국어 / 3순위: 기본값
+            fixedVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('ko')) || 
+                         voices.find(v => v.lang.includes('ko')) || 
+                         voices[0];
+            
+            console.log("목소리 설정 완료:", fixedVoice ? fixedVoice.name : "기본값");
+        }
+
+        // 브라우저가 목소리를 늦게 로드하는 경우 대비
+        setVoice();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = setVoice;
+        }
+
+        // 3. 전원 켜기
         function powerOn() {
+            if (isPowerOn) return; // 이미 켜져있으면 무시
             isPowerOn = true;
+            
             document.getElementById('power-btn').style.display = 'none';
             document.getElementById('status-text').style.display = 'block';
-            document.getElementById('display-screen').innerText = ">>> LUMI-0326 (3.260 MHz · HF Λ-BAND)\n>>> 국가 군사 통제 주파수에 무단 접속 중...\n>>> DJ RUMI가 불법무선국을 준비중 입니다.";
+            document.getElementById('display-screen').innerText = ">>> JINDO-WAVE FM 접속 성공.\n>>> DJ RUMI가 대기중입니다.";
             
-            // TTS 워밍업 (모바일 대응)
-            speak("진도 웨이브에 오신 것을 환영합니다.", true); 
-
-            // 현재 방송 상태 확인
+            // 워밍업 (무음)
+            speak("접속", true); 
             syncCurrentState();
-            // 실시간 구독 시작
             subscribeRadio();
         }
 
-        // 3. 실시간 동기화 (핵심!)
+        // 4. 실시간 구독 (중복 방지 적용)
         function subscribeRadio() {
-            client.channel('public:radio_state')
+            if (radioChannel) client.removeChannel(radioChannel);
+
+            radioChannel = client.channel('public:radio_state')
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'radio_state' }, payload => {
-                    handleBroadcast(payload.new);
+                    // 데이터가 들어오면 약간의 딜레이를 줘서 중복 호출 방지
+                    setTimeout(() => handleBroadcast(payload.new), 50);
                 })
                 .subscribe();
         }
 
-        // 방송 신호 처리
+        // 5. 방송 신호 처리
         function handleBroadcast(state) {
             const screen = document.getElementById('display-screen');
             
             if (state.current_action === 'talking') {
-                // 1. 음악 멈춤
                 if(player && player.stopVideo) player.stopVideo();
                 
-                // 2. 텍스트 표시 & TTS 읽기
+                // 화면 갱신
                 screen.innerText = `[DJ RUMI]:\n${state.payload}`;
-                if(isPowerOn) speak(state.payload);
+                
+                // [중요] 똑같은 내용은 다시 말하지 않음
+                if(isPowerOn) {
+                    if (lastPayload === state.payload && synth.speaking) return;
+                    lastPayload = state.payload;
+                    speak(state.payload);
+                }
 
             } else if (state.current_action === 'music') {
-                // 1. TTS 멈춤
-                synth.cancel();
+                synth.cancel(); // 음악 나올 땐 조용히
+                lastPayload = "";
 
-                // 2. 화면 표시
                 screen.innerText = `[NOW PLAYING] 🎵\nYouTube ID: ${state.payload}`;
 
-                // 3. 유튜브 재생 (싱크 맞추기)
                 if(player && isPowerOn) {
+                    // 이미 같은 노래가 재생 중이면 건너뜀
+                    if(player.getVideoData && player.getVideoData().video_id === state.payload && player.getPlayerState() === 1) return;
+
                     const now = new Date().getTime();
                     const startedAt = new Date(state.started_at).getTime();
-                    const seekTo = (now - startedAt) / 1000; // 경과 시간(초)
-
+                    const seekTo = (now - startedAt) / 1000;
+                    
                     player.loadVideoById(state.payload, seekTo);
                 }
             } else {
+                synth.cancel();
                 screen.innerText = "방송 대기 중...";
                 if(player) player.stopVideo();
             }
         }
 
-        // 4. TTS 함수 (DJ 루미)
+        // 6. [핵심] 말하기 함수 (철저한 초기화)
         function speak(text, isSilent=false) {
-            if (synth.speaking) synth.cancel();
-            if (isSilent) return; // 워밍업용
+            // 무조건 취소부터 하고 시작
+            synth.cancel();
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ko-KR';
-            utterance.pitch = 1.2; // 약간 높은 톤 (루미)
-            utterance.rate = 1.1;  // 약간 빠르게
-            
-            // 목소리 선택 (가능하면 여성/Google 한국어)
-            const voices = synth.getVoices();
-            const rumiVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('ko')) || voices[0];
-            if(rumiVoice) utterance.voice = rumiVoice;
+            if (isSilent) return;
 
-            synth.speak(utterance);
+            // 즉시 실행하지 않고 0.1초 뒤에 실행 (브라우저 버그 방지)
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR';
+                utterance.pitch = 1.1; 
+                utterance.rate = 1.1; 
+                
+                // 아까 고정해둔 목소리만 사용 (매번 검색하지 않음)
+                if (fixedVoice) {
+                    utterance.voice = fixedVoice;
+                }
+
+                synth.speak(utterance);
+            }, 100);
         }
 
-        // 5. 사연 보내기
+        // 7. 사연 보내기
         async function sendRequest() {
             const nick = document.getElementById('req-nick').value;
             const msg = document.getElementById('req-msg').value;
             let url = document.getElementById('req-url').value;
             
-            // 유튜브 ID 추출
             let vidId = null;
             if (url) {
                 const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -253,19 +289,15 @@
 
             if(!nick || !msg) return alert("내용을 입력하세요.");
 
-            await client.from('radio_queue').insert({
-                nickname: nick, message: msg, youtube_id: vidId
-            });
-            alert("사연이 접수되었습니다! DJ가 곧 읽어줍니다.");
+            await client.from('radio_queue').insert({ nickname: nick, message: msg, youtube_id: vidId });
+            alert("사연 접수 완료!");
             document.getElementById('req-msg').value = '';
             document.getElementById('req-url').value = '';
         }
 
-        // =================================================
-        // [DJ 기능] 관리자만 사용
-        // =================================================
+        // 8. DJ 기능
         function toggleDJ() {
-            const pass = prompt("관리자 코드를 입력하세요:");
+            const pass = prompt("관리자 코드:");
             if(pass === "jindo123") {
                 document.getElementById('dj-panel').style.display = 'block';
                 refreshQueue();
@@ -275,27 +307,23 @@
         async function refreshQueue() {
             const { data } = await client.from('radio_queue')
                 .select('*').eq('status', 'waiting').order('created_at', { ascending: true });
-            
             const list = document.getElementById('queue-list');
             list.innerHTML = '';
             if(data) {
                 data.forEach(q => {
-                    list.innerHTML += `<div>- [${q.nickname}] ${q.message.substring(0,15)}... (${q.youtube_id ? '🎵' : '🗣️'})</div>`;
+                    list.innerHTML += `<div>- [${q.nickname}] ${q.message.substring(0,15)}...</div>`;
                 });
             }
         }
 
-        // [핵심] 방송 송출 (DB State 업데이트 -> 모든 청취자 반응)
         async function playNext() {
-            // 1. 대기열에서 하나 가져오기
             const { data } = await client.from('radio_queue')
                 .select('*').eq('status', 'waiting').order('created_at', { ascending: true }).limit(1).single();
 
-            if (!data) return alert("대기중인 사연이 없습니다.");
+            if (!data) return alert("사연 없음");
 
-            // 2. [단계 1] 사연 읽기 송출
-            // DJ 멘트 구성
-            const djScript = `[사연 도착] ${data.nickname}님의 사연입니다.\n\n"${data.message}"`;
+            // 멘트 송출
+            const djScript = `${data.nickname}님의 사연. ${data.message}`;
             
             await client.from('radio_state').update({
                 current_action: 'talking',
@@ -303,11 +331,10 @@
                 started_at: new Date().toISOString()
             }).eq('id', 1);
 
-            // TTS가 읽을 시간 대충 계산 (글자수 * 200ms) 후 음악 재생 예약
+            // 읽는 시간 계산 (음악 예약)
             const readingTime = djScript.length * 250 + 2000; 
             
             setTimeout(async () => {
-                // 3. [단계 2] 음악 재생 (유튜브가 있다면)
                 if (data.youtube_id) {
                     await client.from('radio_state').update({
                         current_action: 'music',
@@ -315,26 +342,21 @@
                         started_at: new Date().toISOString()
                     }).eq('id', 1);
                 } else {
-                    // 음악 없으면 대기 상태로
-                    await client.from('radio_state').update({ current_action: 'idle', payload: '다음 곡 대기 중...' }).eq('id', 1);
+                    await client.from('radio_state').update({ current_action: 'idle', payload: '대기 중...' }).eq('id', 1);
                 }
-
-                // 4. 처리 완료 표시
                 await client.from('radio_queue').update({ status: 'played' }).eq('id', data.id);
                 refreshQueue();
-
             }, readingTime);
         }
         
         async function stopBroadcast() {
-             await client.from('radio_state').update({ current_action: 'idle', payload: '방송이 잠시 중단되었습니다.' }).eq('id', 1);
+             await client.from('radio_state').update({ current_action: 'idle', payload: '방송 중단' }).eq('id', 1);
         }
 
         async function syncCurrentState() {
             const { data } = await client.from('radio_state').select('*').eq('id', 1).single();
             if(data) handleBroadcast(data);
         }
-
     </script>
 </body>
 </html>
