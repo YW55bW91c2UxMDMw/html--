@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - Token Exchange</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <style>
+        /* 🌌 Deep Space Theme (Exchange) */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00d4ff;
+            --up-color: #00ff9d;
+            --down-color: #ff4f6d;
+            --glass-bg: rgba(20, 20, 35, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sub: #a4a4c5;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep); color: var(--text-main);
+            background-image: radial-gradient(circle at 50% 50%, #111130 0%, #050510 100%);
+        }
+
+        /* 레이아웃 */
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: 100vh; }
+        
+        /* 상단 헤더 */
+        header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+        .price-display { font-size: 2rem; font-weight: bold; color: var(--up-color); display: flex; align-items: center; gap: 10px; }
+        .price-change { font-size: 1rem; padding: 5px 10px; background: rgba(0, 255, 157, 0.1); border-radius: 5px; }
+
+        /* 차트 영역 */
+        .chart-card {
+            background: var(--glass-bg); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; height: 600px; position: relative;
+        }
+
+        /* 사이드바 (정보 & 거래) */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        
+        .info-card {
+            background: var(--glass-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+        }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9rem; }
+        .info-label { color: var(--text-sub); }
+        .info-val { font-weight: bold; }
+
+        /* 거래 창 */
+        .trade-box {
+            background: #151525; border: 1px solid var(--accent); border-radius: 12px; padding: 20px; flex: 1;
+        }
+        .trade-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .tab.buy { background: var(--up-color); color: black; }
+        .tab.sell { background: #333; color: #888; } /* 비활성 상태 */
+
+        input { width: 100%; padding: 15px; background: #000; border: 1px solid #444; color: white; margin-bottom: 15px; border-radius: 8px; font-size: 1.1rem; }
+        .btn-trade { width: 100%; padding: 15px; background: var(--up-color); border: none; font-weight: bold; font-size: 1.2rem; cursor: pointer; border-radius: 8px; }
+        
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">JINDOSTAR EXCHANGE</div>
+                <div style="font-size:0.8rem; color:var(--text-sub);">JDS / KRW • INDEX</div>
+            </div>
+            <div class="price-display">
+                <span id="current-price">1,250</span>
+                <span class="price-change">+5.2%</span>
+            </div>
+            <a href="/" style="color:var(--text-sub); text-decoration:none;">나가기 →</a>
+        </header>
+
+        <div class="chart-card">
+            <div id="price-chart" style="height: 100%;"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="info-card">
+                <h3 style="margin-top:0; color:var(--accent);">MARKET STATS</h3>
+                <div class="info-row">
+                    <span class="info-label">시가총액 (Market Cap)</span>
+                    <span class="info-val" id="market-cap">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">총 발행량 (Total Supply)</span>
+                    <span class="info-val" id="total-supply">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">유통량 (Circulating)</span>
+                    <span class="info-val" id="circulating">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">24h 거래량</span>
+                    <span class="info-val">342,102 JDS</span>
+                </div>
+            </div>
+
+            <div class="trade-box">
+                <div class="trade-tabs">
+                    <div class="tab buy">매수 (Buy)</div>
+                    <div class="tab sell" style="background:#222;">매도 (Sell)</div>
+                </div>
+                
+                <div style="margin-bottom:10px; font-size:0.9rem; color:var(--text-sub);">
+                    보유 현금: <span style="color:white;" id="my-cash">0</span> KRW
+                </div>
+                <input type="number" placeholder="주문 수량 (Token)">
+                
+                <div style="margin-bottom:20px; font-size:0.9rem; color:var(--text-sub);">
+                    예상 지출: <span style="color:var(--accent);">0</span> KRW
+                </div>
+                
+                <button class="btn-trade">매수 체결</button>
+                <div style="text-align:center; margin-top:15px; font-size:0.8rem; color:#666;">
+                    * 현재 모의 거래만 지원됩니다.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ★ Supabase 설정 (본인 것 필수)
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 1. 차트 데이터 생성 (더미 데이터)
+        function generateData(count, yrange) {
+            let i = 0;
+            let series = [];
+            while (i < count) {
+                let x = 0; // 타임스탬프는 아래에서 처리
+                let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min;
+                // 캔들 생성: Open, High, Low, Close
+                let open = y;
+                let close = y + Math.floor(Math.random() * 20 - 10);
+                let high = Math.max(open, close) + Math.floor(Math.random() * 10);
+                let low = Math.min(open, close) - Math.floor(Math.random() * 10);
+                
+                series.push({
+                    x: new Date().getTime() - (count - i) * 60000 * 60, // 1시간 단위
+                    y: [open, high, low, close]
+                });
+                i++;
+            }
+            return series;
+        }
+
+        // 2. 차트 렌더링 (ApexCharts)
+        const options = {
+            series: [{
+                data: generateData(50, { min: 1100, max: 1300 })
+            }],
+            chart: {
+                type: 'candlestick',
+                height: '100%',
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            title: {
+                text: 'JDS/KRW Market',
+                align: 'left',
+                style: { color: '#fff' }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: { style: { colors: '#8899ac' } }
+            },
+            yaxis: {
+                tooltip: { enabled: true },
+                labels: { style: { colors: '#8899ac' } }
+            },
+            grid: {
+                borderColor: '#333'
+            },
+            theme: { mode: 'dark' },
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#00ff9d',
+                        downward: '#ff4f6d'
+                    }
+                }
+            }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#price-chart"), options);
+        chart.render();
+
+        // 3. 시장 데이터 불러오기 (Supabase)
+        async function loadMarketStats() {
+            // DB 함수 호출
+            const { data, error } = await client.rpc('get_market_stats');
+            
+            if (data) {
+                const supply = data.total_tokens;
+                const price = 1250; // 고정 또는 변동
+                const marketCap = supply * price;
+
+                // 숫자 포맷팅
+                document.getElementById('total-supply').innerText = supply.toLocaleString() + ' JDS';
+                document.getElementById('circulating').innerText = (supply * 0.85).toLocaleString() + ' JDS'; // 85% 유통 가정
+                document.getElementById('market-cap').innerText = (marketCap / 100000000).toFixed(1) + ' 억원';
+            }
+
+            // 내 지갑 정보
+            const { data: { user } } = await client.auth.getUser();
+            if(user) {
+                const { data: profile } = await client.from('profiles').select('money').eq('id', user.id).single();
+                if(profile) document.getElementById('my-cash').innerText = profile.money.toLocaleString();
+            }
+        }
+
+        loadMarketStats();
+    </script>
+</body>
+</html>
