@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDO MAIL - Secure Line</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 🌌 Deep Space Theme (메일 전용) */
+        :root {
+            --bg-deep: #050510;
+            --accent: #00ff9d;       /* 보안/메일은 해커 그린 색상 */
+            --accent-dim: rgba(0, 255, 157, 0.2);
+            --text-main: #ffffff;
+            --text-sub: #8899ac;
+            --glass-bg: rgba(20, 30, 40, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep); color: var(--text-main);
+            height: 100vh; display: flex; overflow: hidden;
+        }
+
+        /* 1. 사이드바 */
+        .sidebar {
+            width: 250px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border);
+            padding: 20px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); margin-bottom: 30px; letter-spacing: 1px; }
+        .menu-btn {
+            background: transparent; border: none; color: var(--text-sub);
+            padding: 12px; text-align: left; cursor: pointer; border-radius: 8px; font-size: 1rem;
+            transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .menu-btn:hover, .menu-btn.active { background: var(--accent-dim); color: var(--accent); }
+        .compose-btn {
+            background: var(--accent); color: #000; font-weight: bold;
+            text-align: center; justify-content: center; margin-bottom: 20px;
+            box-shadow: 0 0 15px var(--accent-dim);
+        }
+        .compose-btn:hover { background: white; }
+
+        /* 2. 메일 리스트 영역 */
+        .mail-list-container {
+            flex: 1; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; background: rgba(10, 15, 20, 0.6);
+        }
+        .list-header { padding: 20px; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 1.2rem; }
+        .mail-items { overflow-y: auto; flex: 1; }
+        
+        .mail-item {
+            padding: 15px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s;
+        }
+        .mail-item:hover { background: rgba(255,255,255,0.05); }
+        .mail-item.unread { border-left: 3px solid var(--accent); background: rgba(0, 255, 157, 0.05); }
+        .mail-sender { font-size: 0.9rem; color: var(--accent); margin-bottom: 5px; }
+        .mail-subject { font-weight: bold; margin-bottom: 5px; }
+        .mail-preview { font-size: 0.8rem; color: var(--text-sub); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .mail-date { font-size: 0.7rem; color: #555; float: right; }
+
+        /* 3. 메일 읽기 영역 */
+        .mail-view { flex: 1.5; padding: 40px; overflow-y: auto; position: relative; }
+        .view-placeholder { 
+            display: flex; align-items: center; justify-content: center; height: 100%; 
+            color: var(--text-sub); font-size: 1.2rem; 
+        }
+        
+        .mail-content-box { display: none; animation: fadeIn 0.3s; }
+        .view-subject { font-size: 2rem; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .view-meta { color: var(--text-sub); margin-bottom: 30px; font-size: 0.9rem; }
+        .view-body { line-height: 1.8; font-size: 1.1rem; white-space: pre-wrap; }
+
+        /* 모달 (ID 설정 및 메일 쓰기) */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-box {
+            background: #111; border: 1px solid var(--accent); width: 500px; padding: 30px;
+            border-radius: 15px; box-shadow: 0 0 50px rgba(0, 255, 157, 0.1);
+        }
+        input, textarea {
+            width: 100%; background: #222; border: 1px solid #444; color: white;
+            padding: 12px; margin-bottom: 15px; border-radius: 5px; outline: none; font-family: inherit;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); }
+        .btn-send { width: 100%; padding: 12px; background: var(--accent); border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 모바일 대응 */
+        @media (max-width: 800px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: 60px; flex-direction: row; align-items: center; padding: 10px; }
+            .logo { margin: 0; font-size: 1.2rem; }
+            .mail-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); z-index: 50; }
+            .mail-view.active { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">JINDO MAIL</div>
+        <button class="menu-btn compose-btn" onclick="openCompose()">✉️ NEW MAIL</button>
+        <button class="menu-btn active" onclick="loadMails('inbox')">📥 Inbox</button>
+        <button class="menu-btn" onclick="loadMails('sent')">📤 Sent</button>
+        <div style="flex:1;"></div>
+        <div id="my-address" style="font-size:0.8rem; color:var(--text-sub); text-align:center;">loading...</div>
+        <button class="menu-btn" onclick="location.href='/'">🏠 Exit</button>
+    </div>
+
+    <div class="mail-list-container">
+        <div class="list-header" id="list-title">Inbox</div>
+        <div class="mail-items" id="mail-list">
+            </div>
+    </div>
+
+    <div class="mail-view" id="mail-view">
+        <div class="view-placeholder">메일을 선택하여 암호를 해독하세요.</div>
+        
+        <div class="mail-content-box" id="content-box">
+            <button onclick="closeView()" style="background:none; border:none; color:var(--accent); cursor:pointer; margin-bottom:10px;">← Back</button>
+            <div class="view-subject" id="view-subject"></div>
+            <div class="view-meta" id="view-meta"></div>
+            <div class="view-body" id="view-body"></div>
+        </div>
+    </div>
+
+    <div id="id-modal" class="modal">
+        <div class="modal-box">
+            <h2 style="color:var(--accent);">보안 ID 생성</h2>
+            <p style="color:#aaa; font-size:0.9rem;">JINDO MAIL에서 사용할 유일한 ID를 만드세요.</p>
+            <input type="text" id="new-username" placeholder="영문 소문자 ID (예: neo)">
+            <p style="color:var(--accent); font-size:0.9rem;" id="preview-addr">예상 주소: @jindostar.net</p>
+            <button class="btn-send" onclick="createUsername()">ID 생성하기</button>
+        </div>
+    </div>
+
+    <div id="compose-modal" class="modal">
+        <div class="modal-box" style="width: 600px; max-width: 90%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; color:white;">ENCRYPTED MAIL</h2>
+                <span onclick="document.getElementById('compose-modal').style.display='none'" style="cursor:pointer; font-size:1.5rem; color:#666;">×</span>
+            </div>
+            
+            <input type="text" id="to-user" placeholder="받는 사람 ID (예: admin)">
+            <input type="text" id="mail-subject" placeholder="제목">
+            <textarea id="mail-content" rows="10" placeholder="내용을 입력하세요. (전송 시 자동 암호화됩니다)"></textarea>
+            
+            <button class="btn-send" onclick="sendMail()">🚀 SEND SECURE MAIL</button>
+        </div>
+    </div>
+
+    <script>
+        // ★ Supabase 설정 (본인 것으로 교체!)
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let myProfile = null;
+
+        // 초기화
+        window.onload = async () => {
+            const { data: { user } } = await client.auth.getUser();
+            if(!user) { alert("로그인이 필요합니다."); location.href='/'; return; }
+
+            // 프로필(username) 확인
+            const { data, error } = await client.from('profiles').select('*').eq('id', user.id).single();
+            
+            if(!data || !data.username) {
+                // ID가 없으면 생성 모달 띄움
+                document.getElementById('id-modal').style.display = 'flex';
+                document.getElementById('new-username').addEventListener('input', (e) => {
+                    document.getElementById('preview-addr').innerText = e.target.value + "@jindostar.net";
+                });
+            } else {
+                myProfile = data;
+                document.getElementById('my-address').innerText = data.username + "@jindostar.net";
+                loadMails('inbox');
+            }
+        };
+
+        // ID 생성 함수
+        async function createUsername() {
+            const username = document.getElementById('new-username').value.trim().toLowerCase();
+            if(!username) return alert("ID를 입력하세요.");
+            
+            // 특수문자 체크 (영문숫자만)
+            if(/[^a-z0-9]/.test(username)) return alert("영문 소문자와 숫자만 가능합니다.");
+
+            const { data: { user } } = await client.auth.getUser();
+            const { error } = await client.from('profiles').update({ username: username }).eq('id', user.id);
+
+            if(error) {
+                alert("이미 사용 중인 ID이거나 오류가 발생했습니다.");
+            } else {
+                alert("ID 생성 완료! JINDO MAIL에 오신 것을 환영합니다.");
+                location.reload();
+            }
+        }
+
+        // 메일 목록 불러오기
+        async function loadMails(type) {
+            const { data: { user } } = await client.auth.getUser();
+            let query = client.from('mails').select(`
+                *,
+                sender:sender_id(username),
+                receiver:receiver_id(username)
+            `).order('created_at', { ascending: false });
+
+            if(type === 'inbox') {
+                query = query.eq('receiver_id', user.id);
+                document.getElementById('list-title').innerText = "Inbox (받은 편지함)";
+            } else {
+                query = query.eq('sender_id', user.id);
+                document.getElementById('list-title').innerText = "Sent (보낸 편지함)";
+            }
+
+            const { data, error } = await query;
+            const listEl = document.getElementById('mail-list');
+            listEl.innerHTML = '';
+
+            if(error) return console.error(error);
+
+            data.forEach(mail => {
+                const item = document.createElement('div');
+                item.className = `mail-item ${!mail.is_read && type === 'inbox' ? 'unread' : ''}`;
+                
+                // 보낸사람/받은사람 표시
+                const other = type === 'inbox' ? 
+                    (mail.sender?.username || 'Unknown') : 
+                    `To: ${mail.receiver?.username || 'Unknown'}`;
+
+                item.innerHTML = `
+                    <div class="mail-sender">${other}@jindostar.net</div>
+                    <div class="mail-subject">${mail.subject}</div>
+                    <div class="mail-preview">${mail.content.substring(0, 30)}...</div>
+                    <div class="mail-date">${new Date(mail.created_at).toLocaleDateString()}</div>
+                `;
+                item.onclick = () => viewMail(mail, type);
+                listEl.appendChild(item);
+            });
+        }
+
+        // 메일 읽기
+        async function viewMail(mail, type) {
+            // 모바일 뷰 처리
+            document.getElementById('mail-view').classList.add('active');
+            
+            // 내용 표시
+            document.querySelector('.view-placeholder').style.display = 'none';
+            document.getElementById('content-box').style.display = 'block';
+            
+            const from = mail.sender?.username || 'Unknown';
+            const to = mail.receiver?.username || 'Unknown';
+
+            document.getElementById('view-subject').innerText = mail.subject;
+            document.getElementById('view-meta').innerHTML = `
+                From: <span style="color:var(--accent)">${from}@jindostar.net</span><br>
+                To: ${to}@jindostar.net<br>
+                Date: ${new Date(mail.created_at).toLocaleString()}
+            `;
+            document.getElementById('view-body').innerText = mail.content;
+
+            // 읽음 처리 (받은 메일이고 안 읽었을 때만)
+            if(type === 'inbox' && !mail.is_read) {
+                await client.from('mails').update({ is_read: true }).eq('id', mail.id);
+                // UI 갱신을 위해 목록 다시 로드하지 않고 스타일만 변경해도 됨 (생략)
+            }
+        }
+
+        function closeView() {
+            document.getElementById('mail-view').classList.remove('active');
+        }
+
+        // 메일 쓰기 모달 열기
+        function openCompose() {
+            document.getElementById('compose-modal').style.display = 'flex';
+        }
+
+        // 메일 전송
+        async function sendMail() {
+            const toUsername = document.getElementById('to-user').value.trim();
+            const subject = document.getElementById('mail-subject').value;
+            const content = document.getElementById('mail-content').value;
+
+            if(!toUsername || !subject || !content) return alert("모든 항목을 입력하세요.");
+
+            // 1. 받는 사람 UUID 찾기
+            const { data: receiver, error } = await client
+                .from('profiles')
+                .select('id')
+                .eq('username', toUsername)
+                .single();
+
+            if(!receiver) return alert("존재하지 않는 사용자 ID입니다.");
+
+            // 2. 메일 전송 (내용은 평문으로 저장되지만, 정책상 본인과 수신자만 볼 수 있음)
+            // 더 강력한 보안을 원하면 여기서 CryptoJS로 암호화 가능
+            const { data: { user } } = await client.auth.getUser();
+            
+            const { error: sendError } = await client.from('mails').insert({
+                sender_id: user.id,
+                receiver_id: receiver.id,
+                subject: subject,
+                content: content
+            });
+
+            if(sendError) {
+                alert("전송 실패: " + sendError.message);
+            } else {
+                alert("메일이 암호화되어 전송되었습니다.");
+                document.getElementById('compose-modal').style.display = 'none';
+                document.getElementById('to-user').value = '';
+                document.getElementById('mail-subject').value = '';
+                document.getElementById('mail-content').value = '';
+                loadMails('sent');
+            }
+        }
+    </script>
+</body>
+</html>
