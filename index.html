@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="wallet.js"></script>
     <style>
-        /* 🌌 [JindoStar 우주 테마 시스템] (다른 페이지와 통일) */
+        /* 🌌 [JindoStar 우주 테마 시스템] */
         :root {
             --bg-deep: #050510;
             --accent: #00d4ff;       /* 네온 시안 */
@@ -29,7 +29,6 @@
             font-family: 'Pretendard', sans-serif;
             background-color: var(--bg-deep);
             color: var(--text-main);
-            /* 우주 별 배경 */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
@@ -42,246 +41,375 @@
             justify-content: center;
         }
 
-        /* 메인 컨테이너 (중앙 정렬) */
+        /* 메인 컨테이너 */
         .landing-container {
             text-align: center;
             padding: 40px;
             max-width: 800px;
             width: 90%;
-            
-            /* 글래스모피즘 효과 */
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
             animation: fadeIn 1s ease-out;
-        }
-
-        /* 타이틀 */
-        .main-title {
-            font-size: 3rem;
-            font-weight: 900;
-            color: var(--accent);
-            text-shadow: 0 0 25px var(--accent-glow);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-        .sub-title {
-            color: var(--text-sub);
-            font-size: 1.1rem;
-            margin-bottom: 50px;
-        }
-
-        /* 링크 카드 컨테이너 (그리드) */
-        .link-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 반응형 그리드 */
-            gap: 25px;
-            justify-content: center;
-        }
-
-        /* 링크 카드 버튼 디자인 */
-        .link-card {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 15px;
-            transition: all 0.3s ease;
-            overflow: hidden;
             position: relative;
+            z-index: 1;
         }
 
-        /* 마우스 올렸을 때 효과 */
+        .main-title {
+            font-size: 3rem; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 25px var(--accent-glow);
+            margin-bottom: 10px; letter-spacing: 2px;
+        }
+        .sub-title { color: var(--text-sub); font-size: 1.1rem; margin-bottom: 50px; }
+
+        /* 상단 로그인/회원가입 버튼 영역 */
+        .auth-bar {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 10px; z-index: 100;
+        }
+        .auth-btn {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
+            color: var(--text-sub); padding: 8px 15px; border-radius: 20px;
+            font-size: 0.85rem; cursor: pointer; transition: 0.3s; text-decoration: none;
+        }
+        .auth-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 212, 255, 0.1); }
+        .auth-btn.primary { background: var(--accent); color: #000; border: none; font-weight: bold; }
+        .auth-btn.primary:hover { background: white; box-shadow: 0 0 15px var(--accent-glow); }
+
+        /* 링크 카드 컨테이너 */
+        .link-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px; justify-content: center;
+        }
+
+        .link-card {
+            display: flex; align-items: center; text-decoration: none;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 15px; transition: all 0.3s ease;
+            overflow: hidden; position: relative;
+        }
         .link-card:hover {
-            background: rgba(0, 212, 255, 0.1);
-            border-color: var(--accent);
-            box-shadow: 0 0 30px var(--accent-glow);
-            transform: translateY(-5px);
+            background: rgba(0, 212, 255, 0.1); border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-5px);
         }
-
-        /* 루미 이미지 스타일 */
         .link-card img {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            object-fit: cover;
-            margin-right: 20px;
-            border: 2px solid transparent;
-            transition: 0.3s;
+            width: 80px; height: 80px; border-radius: 12px; object-fit: cover;
+            margin-right: 20px; border: 2px solid transparent; transition: 0.3s;
         }
-        .link-card:hover img {
-            border-color: var(--accent);
-            transform: scale(1.05);
-        }
+        .link-card:hover img { border-color: var(--accent); transform: scale(1.05); }
 
-        /* 텍스트 스타일 */
-        .link-text {
-            text-align: left;
-        }
-        .link-title {
-            display: block;
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 5px;
-        }
-        .link-desc {
-            font-size: 0.9rem;
-            color: var(--text-sub);
-        }
-        .link-card:hover .link-title {
-            color: var(--accent);
-        }
+        .link-text { text-align: left; }
+        .link-title { display: block; font-size: 1.4rem; font-weight: 800; color: white; margin-bottom: 5px; }
+        .link-desc { font-size: 0.9rem; color: var(--text-sub); }
+        .link-card:hover .link-title { color: var(--accent); }
 
-        /* 등장 애니메이션 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* 🔐 로그인 모달 (팝업) 스타일 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 999; backdrop-filter: blur(5px);
+            align-items: center; justify-content: center;
         }
+        .modal-box {
+            background: #101020; border: 1px solid var(--accent);
+            padding: 40px; border-radius: 20px; width: 90%; max-width: 400px;
+            box-shadow: 0 0 50px var(--accent-glow); text-align: center; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 20px; font-size: 1.5rem;
+            color: #666; cursor: pointer;
+        }
+        .modal-title { font-size: 1.8rem; color: white; margin-bottom: 30px; font-weight: bold; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; color: var(--text-sub); font-size: 0.9rem; margin-bottom: 5px; }
+        .modal-input {
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border); border-radius: 8px; color: white;
+            font-family: inherit; outline: none; transition: 0.3s;
+        }
+        .modal-input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 
-        /* 모바일 최적화 */
+        .submit-btn {
+            width: 100%; padding: 12px; background: linear-gradient(90deg, var(--accent), #006eff);
+            border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 1rem;
+            cursor: pointer; margin-top: 10px; transition: 0.3s;
+        }
+        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--accent-glow); }
+
+        .toggle-text { margin-top: 20px; font-size: 0.9rem; color: #888; }
+        .toggle-link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         @media (max-width: 600px) {
             .main-title { font-size: 2.2rem; }
-            .link-card { padding: 12px; }
-            .link-card img { width: 60px; height: 60px; margin-right: 15px; }
-            .link-title { font-size: 1.2rem; }
+            .auth-bar { top: 10px; right: 10px; }
         }
     </style>
 </head>
 <body>
+
+    <div class="auth-bar" id="auth-ui">
+        </div>
 
     <div class="landing-container">
         <h1 class="main-title">JINDOSTAR</h1>
         <p class="sub-title">익명과 자유의 사이버 스페이스에 오신 것을 환영합니다.</p>
 
         <div class="link-container">
+            <a href="identity.html" class="link-card">
+                <img src="img/rumi_fakeID.png" alt="가짜ID">
+                <div class="link-text">
+                    <span class="link-title">가짜 ID 생성기</span>
+                    <span class="link-desc">가짜 정보를 얻으세요</span>
+                </div>
+            </a>
 
-    <a href="identity.html" class="link-card">
-        <img src="img/rumi_fakeID.png" alt="가짜ID">
-        <div class="link-text">
-            <span class="link-title">가짜 ID 생성기</span>
-            <span class="link-desc">가짜 정보를 얻으세요</span>
-        </div>
-    </a>
+            <a href="board.html" class="link-card">
+                <img src="img/rumi_board.png" alt="루미 게시판">
+                <div class="link-text">
+                    <span class="link-title">익명 게시판 /b/</span>
+                    <span class="link-desc">추적 불가능한 자유 공간</span>
+                </div>
+            </a>
 
-    <a href="board.html" class="link-card">
-        <img src="img/rumi_board.png" alt="루미 게시판">
-        <div class="link-text">
-            <span class="link-title">익명 게시판 /b/</span>
-            <span class="link-desc">추적 불가능한 자유 공간</span>
-        </div>
-    </a>
+            <a href="chat.html" class="link-card">
+                <img src="img/rumi_chat.png" alt="루미 채팅">
+                <div class="link-text">
+                    <span class="link-title">익명 채팅</span>
+                    <span class="link-desc">익명 자유 채팅</span>
+                </div>
+            </a>
 
-    <a href="chat.html" class="link-card">
-        <img src="img/rumi_chat.png" alt="루미 채팅">
-        <div class="link-text">
-            <span class="link-title">익명 채팅</span>
-            <span class="link-desc">익명 자유 채팅</span>
-        </div>
-    </a>
+            <a href="trans.html" class="link-card">
+                <img src="img/rumi_dprk.png" alt="바른 말 교정기">
+                <div class="link-text">
+                    <span class="link-title">바른 말 교정기</span>
+                    <span class="link-desc">아름다운 우리 말</span>
+                </div>
+            </a>
 
-    <a href="trans.html" class="link-card">
-        <img src="img/rumi_dprk.png" alt="바른 말 교정기">
-        <div class="link-text">
-            <span class="link-title">바른 말 교정기</span>
-            <span class="link-desc">아름다운 우리 말</span>
-        </div>
-    </a>
+            <a href="capsule.html" class="link-card">
+                <img src="img/rumi_capsule.png" alt="타임갭슐">
+                <div class="link-text">
+                    <span class="link-title">타임 캡슐</span>
+                    <span class="link-desc">미래의 당신에게 편지를 쓰세요</span>
+                </div>
+            </a>
 
-    <a href="capsule.html" class="link-card">
-        <img src="img/rumi_capsule.png" alt="타임갭슐">
-        <div class="link-text">
-            <span class="link-title">타임 캡슐</span>
-            <span class="link-desc">미래의 당신에게 편지를 쓰세요</span>
+            <a href="#" onclick="toggleMoreMenu(); return false;" class="link-card" id="more-btn">
+                <img src="img/rumi_search.png" alt="더보기" style="filter: hue-rotate(90deg);"> 
+                <div class="link-text">
+                    <span class="link-title" id="more-text">Explore More</span>
+                    <span class="link-desc">전체 메뉴 보기</span>
+                </div>
+            </a>
         </div>
-    </a>
 
-    <a href="#" onclick="toggleMoreMenu(); return false;" class="link-card" id="more-btn">
-        <img src="img/rumi_search.png" alt="더보기" style="filter: hue-rotate(90deg);"> 
-        <div class="link-text">
-            <span class="link-title" id="more-text">Explore More</span>
-            <span class="link-desc">전체 메뉴 보기</span>
-        </div>
-    </a>
-</div>
+        <div id="hidden-menu" class="link-container" style="display: none; margin-top: 25px; opacity: 0; transition: opacity 0.5s ease;">
+            <a href="#" onclick="goRandomPage(); return false;" class="link-card" style="border-color: var(--accent);">
+                <img src="img/rumi_random.png" alt="랜덤 워프">
+                <div class="link-text">
+                    <span class="link-title">I'm Feeling Foxy!</span>
+                    <span class="link-desc">랜덤 페이지로 워프</span>
+                </div>
+            </a>
 
-<div id="hidden-menu" class="link-container" style="display: none; margin-top: 25px; opacity: 0; transition: opacity 0.5s ease;">
-    
-    <a href="#" onclick="goRandomPage(); return false;" class="link-card" style="border-color: var(--accent);">
-        <img src="img/rumi_random.png" alt="랜덤 워프">
-        <div class="link-text">
-            <span class="link-title">I'm Feeling Foxy!</span>
-            <span class="link-desc">랜덤 페이지로 워프</span>
-        </div>
-    </a>
+            <a href="video.html" class="link-card">
+                <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스">
+                <div class="link-text">
+                    <span class="link-title">JINDOFLIX</span>
+                    <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
+                </div>
+            </a>
 
-    <a href="video.html" class="link-card">
-        <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스">
-        <div class="link-text">
-            <span class="link-title">JINDOFLIX</span>
-            <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
-        </div>
-    </a>
+            <a href="software.html" class="link-card">
+                <img src="img/rumi_pirate.png" alt="해적 루미">
+                <div class="link-text">
+                    <span class="link-title">파일 공유</span>
+                    <span class="link-desc">자신의 창작물을 공유하세요</span>
+                </div>
+            </a>
 
-    <a href="software.html" class="link-card">
-        <img src="img/rumi_pirate.png" alt="해적 루미">
-        <div class="link-text">
-            <span class="link-title">파일 공유</span>
-            <span class="link-desc">자신의 창작물을 공유하세요</span>
+            <a href="dansen.html" class="link-card">
+                <div class="link-text">
+                    <span class="link-title">Dansen</span>
+                    <span class="link-desc">단센 페이지</span>
+                </div>
+            </a>
         </div>
-    </a>
-
-    <a href="dansen.html" class="link-card">
-        <div class="link-text">
-            <span class="link-title">Dansen</span>
-            <span class="link-desc">단센 페이지</span>
-        </div>
-    </a>
-    
     </div>
-<script>
-    // 1. 더보기 메뉴 토글 함수
-    function toggleMoreMenu() {
-        const menu = document.getElementById('hidden-menu');
-        const btnText = document.getElementById('more-text');
 
-        if (menu.style.display === 'none') {
-            // 메뉴 열기
-            menu.style.display = 'grid';
-            // 약간의 딜레이를 주어 페이드인 효과 적용
-            setTimeout(() => { menu.style.opacity = '1'; }, 10);
-            btnText.innerText = "Close Menu"; // 텍스트 변경 (선택사항)
-        } else {
-            // 메뉴 닫기
-            menu.style.opacity = '0';
-            setTimeout(() => { menu.style.display = 'none'; }, 500); // 애니메이션 후 숨김
-            btnText.innerText = "Explore More";
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeAuthModal()">×</span>
+            <h2 id="modal-title" class="modal-title">LOGIN</h2>
+            
+            <div class="input-group">
+                <label>E-Mail</label>
+                <input type="email" id="auth-email" class="modal-input" placeholder="user@jindostar.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="auth-password" class="modal-input" placeholder="********">
+            </div>
+
+            <button class="submit-btn" onclick="handleAuth()" id="auth-action-btn">로그인 (Sign In)</button>
+
+            <div class="toggle-text">
+                <span id="toggle-msg">아직 계정이 없으신가요?</span>
+                <span id="toggle-btn" class="toggle-link" onclick="toggleAuthMode()">회원가입</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================
+        // [필수] 본인의 Supabase 키로 교체하세요!
+        // =================================================
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        // =================================================
+        
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+        let isLoginMode = true; // 현재 모드 (true: 로그인, false: 회원가입)
+
+        // 1. 페이지 로드 시 로그인 상태 확인
+        window.onload = async function() {
+            checkUserStatus();
+        };
+
+        // 2. 유저 상태 확인 및 UI 업데이트
+        async function checkUserStatus() {
+            const { data: { user } } = await client.auth.getUser();
+            const ui = document.getElementById('auth-ui');
+
+            if (user) {
+                // 로그인 상태
+                ui.innerHTML = `
+                    <a href="mypage.html" class="auth-btn">마이페이지</a>
+                    <button onclick="handleLogout()" class="auth-btn primary">로그아웃</button>
+                `;
+            } else {
+                // 비로그인 상태
+                ui.innerHTML = `
+                    <button onclick="openAuthModal()" class="auth-btn primary">로그인 / 가입</button>
+                `;
+            }
         }
-    }
 
-    // 2. 랜덤 이동 함수 (기존 유지)
-    function goRandomPage() {
-        const pages = [
-            'board.html',
-            'software.html',
-            'chat.html',
-            'dansen.html',
-            'cal.html',
-            'mad.html',
-            'trans.html',
-            'video.html',
-        ];
+        // 3. 모달 제어 함수
+        function openAuthModal() {
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+        function closeAuthModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+        }
 
-        const randomIndex = Math.floor(Math.random() * pages.length);
-        const targetPage = pages[randomIndex];
+        // 4. 로그인 <-> 회원가입 모드 전환
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('modal-title');
+            const btn = document.getElementById('auth-action-btn');
+            const msg = document.getElementById('toggle-msg');
+            const toggleBtn = document.getElementById('toggle-btn');
 
-        console.log(`🎲 워프: ${targetPage}`);
-        window.location.href = targetPage;
-    }
-</script>
+            if (isLoginMode) {
+                title.innerText = "LOGIN";
+                btn.innerText = "로그인 (Sign In)";
+                msg.innerText = "아직 계정이 없으신가요?";
+                toggleBtn.innerText = "회원가입";
+            } else {
+                title.innerText = "SIGN UP";
+                btn.innerText = "회원가입 (Register)";
+                msg.innerText = "이미 계정이 있으신가요?";
+                toggleBtn.innerText = "로그인";
+            }
+        }
+
+        // 5. 로그인 또는 회원가입 처리 (핵심 로직)
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) return alert("이메일과 비밀번호를 입력해주세요.");
+
+            if (isLoginMode) {
+                // 로그인 시도
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                if (error) {
+                    alert("로그인 실패: " + error.message);
+                } else {
+                    // alert("로그인 성공! 환영합니다.");
+                    closeAuthModal();
+                    checkUserStatus(); // UI 갱신
+                    
+                    // wallet.js가 있다면 지갑 정보도 새로고침
+                    if (typeof loadWallet === 'function') loadWallet();
+                }
+            } else {
+                // 회원가입 시도
+                const { data, error } = await client.auth.signUp({
+                    email: email,
+                    password: password
+                });
+                if (error) {
+                    alert("가입 실패: " + error.message);
+                } else {
+                    alert("회원가입 성공! 자동 로그인됩니다.");
+                    closeAuthModal();
+                    checkUserStatus();
+                    
+                    // Supabase 트리거가 없다면 여기서 초기 프로필을 생성해줄 수도 있음 (선택사항)
+                    // 보통은 wallet.js의 loadWallet()이 실행되면서 없으면 생성함.
+                    if (typeof loadWallet === 'function') loadWallet();
+                }
+            }
+        }
+
+        // 6. 로그아웃 처리
+        async function handleLogout() {
+            if (confirm("정말 로그아웃 하시겠습니까?")) {
+                const { error } = await client.auth.signOut();
+                if (!error) {
+                    checkUserStatus();
+                    alert("로그아웃 되었습니다.");
+                    // 페이지 새로고침 (지갑 정보 등 초기화 위해)
+                    location.reload();
+                }
+            }
+        }
+
+        // 7. 더보기 메뉴 토글 함수 (기존)
+        function toggleMoreMenu() {
+            const menu = document.getElementById('hidden-menu');
+            const btnText = document.getElementById('more-text');
+
+            if (menu.style.display === 'none') {
+                menu.style.display = 'grid';
+                setTimeout(() => { menu.style.opacity = '1'; }, 10);
+                btnText.innerText = "Close Menu";
+            } else {
+                menu.style.opacity = '0';
+                setTimeout(() => { menu.style.display = 'none'; }, 500);
+                btnText.innerText = "Explore More";
+            }
+        }
+
+        // 8. 랜덤 이동 함수 (기존)
+        function goRandomPage() {
+            const pages = [
+                'board.html', 'software.html', 'chat.html', 'dansen.html',
+                'cal.html', 'mad.html', 'trans.html', 'video.html',
+            ];
+            const randomIndex = Math.floor(Math.random() * pages.length);
+            window.location.href = pages[randomIndex];
+        }
+    </script>
 </body>
 </html>
