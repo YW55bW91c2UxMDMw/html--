@@ -2,21 +2,62 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 레이싱 : 사운드 에디션</title>
+    <title>루미 레이싱 : 토큰 시스템</title>
     <style>
-        /* 스타일은 기존과 동일 */
+        /* 기본 스타일 */
         body { font-family: 'Pretendard', sans-serif; background-color: #1a1a1a; color: white; text-align: center; padding: 10px; overflow-x: hidden; }
-        h1 { margin-bottom: 10px; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
-        .status-board { background: linear-gradient(145deg, #2c3e50, #000); padding: 15px; border-radius: 15px; display: inline-block; border: 2px solid #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.3); margin-bottom: 15px; min-width: 320px; }
-        .balance { font-size: 1.8em; font-weight: bold; color: #f1c40f; }
-        #msg { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; min-height: 24px; color: #bdc3c7; font-size: 0.95em; }
+        h1 { margin-bottom: 5px; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
         
-        .controls { margin: 10px 0; background: #333; padding: 10px; border-radius: 10px; display: inline-block; }
+        /* 상단 정보창 (현금 & 토큰) */
+        .dashboard {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .status-board { 
+            background: linear-gradient(145deg, #2c3e50, #000); 
+            padding: 10px 20px; 
+            border-radius: 12px; 
+            border: 1px solid #555;
+            min-width: 150px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .label { font-size: 0.8em; color: #bbb; display: block; margin-bottom: 5px; }
+        .balance { font-size: 1.4em; font-weight: bold; }
+        .money { color: #2ecc71; } /* 현금 색상 */
+        .token { color: #f1c40f; } /* 토큰 색상 */
+
+        /* 환전소 스타일 */
+        .exchange-box {
+            background: #333;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 15px;
+            border: 1px solid #444;
+        }
+        .exchange-btn {
+            background-color: #3498db;
+            color: white;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            margin: 0 5px;
+            border-radius: 4px;
+        }
+        .exchange-btn:hover { background-color: #2980b9; }
+
+        /* 중계창 */
+        #msg { margin-top: 5px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; min-height: 24px; color: #bdc3c7; font-size: 0.95em; }
+        
+        /* 컨트롤 패널 */
+        .controls { margin: 10px 0; background: #222; padding: 15px; border-radius: 10px; display: inline-block; border: 1px solid #f1c40f; }
         select, input, button { padding: 10px; font-size: 15px; margin: 3px; border-radius: 5px; border: none; outline: none; }
         button { background-color: #e74c3c; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px #c0392b; }
         button:active { box-shadow: 0 2px #c0392b; transform: translateY(2px); }
         button:disabled { background-color: #555; box-shadow: none; cursor: not-allowed; }
         
+        /* 트랙 스타일 */
         .track-container { width: 95%; max-width: 800px; background-color: #2ecc71; margin: 0 auto; border: 6px solid #145a32; border-radius: 10px; padding: 5px 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
         .finish-line { position: absolute; right: 40px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #fff, #fff 10px, #000 10px, #000 20px); z-index: 1; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         .lane { height: 90px; border-bottom: 2px dashed rgba(255,255,255,0.3); position: relative; display: flex; align-items: center; }
@@ -46,13 +87,27 @@
     <canvas id="confetti"></canvas>
     <audio id="bgm" src="../../sound/william.mp3" loop></audio>
 
-    <h1>🦊 RUMI SPEED RACE</h1>
+    <h1>🦊 RUMI CASINO RACE</h1>
 
-    <div class="status-board">
-        <div style="font-size:0.9em; color:#bbb;">CURRENT WALLET</div>
-        <span id="wallet" class="balance">10,000</span> KRW
-        <div id="msg">루미를 선택하고 대박을 노리세요!</div>
+    <div class="dashboard">
+        <div class="status-board">
+            <span class="label">MY CASH (KRW)</span>
+            <span id="money" class="balance money">100,000</span> 원
+        </div>
+        <div class="status-board" style="border-color: #f1c40f;">
+            <span class="label">GAME TOKEN</span>
+            🪙 <span id="token" class="balance token">0</span> 개
+        </div>
     </div>
+
+    <div class="exchange-box">
+        <span style="font-size:0.9em; color:#ddd; margin-right:10px;">🏦 환전소 (1토큰 = 1,000원)</span>
+        <button class="exchange-btn" onclick="buyToken(1)">1개 구매</button>
+        <button class="exchange-btn" onclick="buyToken(10)">10개 구매</button>
+        <button class="exchange-btn" onclick="buyToken(50)">50개 구매</button>
+    </div>
+    
+    <div id="msg">토큰을 구매해서 배팅하세요!</div>
 
     <div class="controls">
         <select id="snailSelect">
@@ -60,8 +115,8 @@
             <option value="1">🔵 2번 루미 (x2.0) - 다크호스</option>
             <option value="2">🟢 3번 루미 (x3.0) - 인생역전</option>
         </select>
-        <input type="number" id="betAmount" min="100" step="100" value="1000" placeholder="배팅금">
-        <button id="startBtn" onclick="startRace()">배팅하기</button>
+        <input type="number" id="betAmount" min="1" step="1" value="1" placeholder="배팅 토큰">
+        <button id="startBtn" onclick="startRace()">배팅하기 (토큰)</button>
     </div>
 
     <div class="track-container">
@@ -94,10 +149,14 @@
     </div>
 
     <script>
-        let wallet = 10000;
+        // ★ 변수 분리: 현금(money)과 토큰(token)
+        let money = 100000;
+        let token = 0;
         let isRacing = false;
         let runInterval; 
         
+        const TOKEN_PRICE = 1000; // 1토큰 = 1000원
+
         const snails = [ document.getElementById('snail0'), document.getElementById('snail1'), document.getElementById('snail2') ];
         const bubbles = [ document.getElementById('bubble0'), document.getElementById('bubble1'), document.getElementById('bubble2') ];
         const msg = document.getElementById('msg');
@@ -108,9 +167,28 @@
         
         const comments = [ "치열합니다!", "누가 이길지 몰라요!", "막판 스퍼트?!", "엄청난 속도입니다!", "땀을 쥐게 하네요!"];
 
-        function updateWallet(amount) {
-            wallet += amount;
-            document.getElementById('wallet').innerText = wallet.toLocaleString();
+        // UI 업데이트 함수
+        function updateUI() {
+            document.getElementById('money').innerText = money.toLocaleString();
+            document.getElementById('token').innerText = token.toLocaleString();
+        }
+
+        // ★ 환전 함수 (Cash -> Token)
+        function buyToken(amount) {
+            if (isRacing) {
+                alert("경기 중에는 환전할 수 없습니다.");
+                return;
+            }
+            const cost = amount * TOKEN_PRICE;
+            if (money >= cost) {
+                money -= cost;
+                token += amount;
+                updateUI();
+                msg.innerText = `✅ 토큰 ${amount}개를 구매했습니다.`;
+                msg.style.color = "#2ecc71";
+            } else {
+                alert("현금이 부족합니다!");
+            }
         }
 
         function showBubble(index, text) {
@@ -126,19 +204,28 @@
             const selectedSnail = parseInt(document.getElementById('snailSelect').value);
             const startBtn = document.getElementById('startBtn');
 
-            if (betAmount > wallet || betAmount <= 0 || isNaN(betAmount)) {
-                alert("돈이 부족하거나 잘못된 입력입니다.");
+            // ★ 배팅 검증 로직 변경 (돈 대신 토큰 확인)
+            if (betAmount > token) {
+                alert("토큰이 부족합니다! 환전소에서 구매해주세요.");
+                return;
+            }
+            if (betAmount <= 0 || isNaN(betAmount)) {
+                alert("올바른 배팅 개수를 입력하세요.");
                 return;
             }
 
-            // ★ 음악 재생 (시작할 때) ★
+            // 음악 재생
             bgm.volume = 0.5; 
             bgm.currentTime = 0; 
-            bgm.play().catch(e => console.log("bgm.mp3 파일 확인 필요"));
+            bgm.play().catch(e => console.log("bgm.mp3 필요"));
 
             isRacing = true;
             startBtn.disabled = true;
-            updateWallet(-betAmount);
+            
+            // ★ 토큰 차감
+            token -= betAmount;
+            updateUI();
+
             msg.innerText = "🚨 경기 시작! 출발합니다!";
             msg.style.color = "#bdc3c7";
             
@@ -207,10 +294,8 @@
             const names = ["1번 루미", "2번 루미", "3번 루미"];
 
             clearInterval(runInterval);
-            
-            // ★ 음악 정지 및 되감기 (게임 끝날 때) ★
             bgm.pause(); 
-            bgm.currentTime = 0; // 다음 판을 위해 처음으로 되감기
+            bgm.currentTime = 0;
             
             snails.forEach(s => {
                 s.querySelector('.frame1').style.display = 'block';
@@ -220,9 +305,13 @@
             snails[winner].classList.add('winner');
 
             if (winner === selectedSnail) {
+                // ★ 당첨금 지급 (토큰으로 지급)
+                // 소수점 버림 (Math.floor)
                 const payout = Math.floor(betAmount * odds[selectedSnail]);
-                updateWallet(payout);
-                msg.innerHTML = `🎉 <b>대박!</b> ${names[winner]} 우승! <span style="color:#f1c40f;">+${payout.toLocaleString()}원</span>`;
+                token += payout;
+                updateUI();
+                
+                msg.innerHTML = `🎉 <b>적중!</b> ${names[winner]} 승리! <span style="color:#f1c40f;">+${payout} 토큰 획득</span>`;
                 msg.style.color = "#2ecc71";
                 startConfetti(); 
             } else {
