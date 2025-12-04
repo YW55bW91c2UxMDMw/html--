@@ -160,11 +160,16 @@
             <div class="profile-avatar">👨‍🚀</div>
             <div class="profile-info">
                 <h1>
-                    <span id="display-nick">탐사대원</span>
+                    <span id="display-nick">데이터 로딩중...</span>
                     <button class="edit-btn" onclick="openNickModal()">✏️ 수정</button>
                 </h1>
                 <p id="display-email">user@jindostar.com</p>
-                <p style="font-size:0.8rem; color:#666; margin-top:5px;">UID: <span id="display-uid">...</span></p>
+                <p style="font-size:0.8rem; color:#666; margin-top:5px;">
+                    UID: <span id="display-uid">...</span>
+                </p>
+                <p style="font-size:0.8rem; color:var(--accent); margin-top:5px; display:none;" id="mail-addr-box">
+                    📧 <span id="display-mail-addr"></span>
+                </p>
             </div>
         </div>
 
@@ -179,7 +184,7 @@
                     <span style="color:var(--text-sub);">보유 토큰</span>
                     <span class="asset-value token"><span id="my-token">0</span> 🪙</span>
                 </div>
-                <button class="btn btn-outline" onclick="alert('환전소는 게임 페이지에서 이용 가능합니다.')">환전하러 가기</button>
+                <button class="btn btn-outline" onclick="location.href='game.html'">게임하러 가기</button>
             </div>
 
             <div class="card">
@@ -236,7 +241,9 @@
     </div>
 
     <script>
-        // ★ Supabase 키 설정 (본인 것으로 교체!)
+        // =================================================
+        // [필수] Supabase 연결 키 (index.html과 동일하게 맞춤)
+        // =================================================
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
         
@@ -244,17 +251,21 @@
 
         // 페이지 로드 시
         window.onload = async () => {
+            // 1. 현재 로그인된 사용자 확인
             const { data: { user } } = await supabase.auth.getUser();
+            
+            // 로그인이 안 되어있으면 메인으로 쫓아냄
             if (!user) {
-                alert("로그인이 필요합니다.");
+                alert("로그인이 필요합니다. 메인 페이지에서 로그인해주세요.");
                 location.href = 'index.html';
                 return;
             }
 
-            // 기본 정보 표시
+            // 2. 화면에 기본 정보 표시 (이메일 등)
             document.getElementById('display-email').innerText = user.email;
             document.getElementById('display-uid').innerText = user.id.slice(0, 8) + "...";
 
+            // 3. DB에서 상세 정보 불러오기
             loadProfile(user.id);
             loadHistory(user.id);
         };
@@ -272,8 +283,17 @@
                 document.getElementById('my-token').innerText = data.token.toLocaleString();
                 document.getElementById('display-nick').innerText = data.nickname || '이름 없는 탐사대원';
                 
+                // Jindo Mail 주소가 있으면 표시
+                if (data.username) {
+                    document.getElementById('display-mail-addr').innerText = data.username + "@jindostar.net";
+                    document.getElementById('mail-addr-box').style.display = 'block';
+                }
+
                 // 채굴 가능 여부 확인
                 checkMiningStatus(data.last_mined_at);
+            } else {
+                console.log("프로필 데이터가 없습니다. (초기화 필요)");
+                // 만약 프로필이 없으면 wallet.js나 index.html의 로직에서 생성되어야 함
             }
         }
 
@@ -295,7 +315,7 @@
                 btn.innerText = "⏳ 충전 중...";
                 timer.style.display = 'block';
                 
-                // 남은 시간 계산 (선택사항)
+                // 남은 시간 계산
                 const remain = new Date(lastDate.getTime() + oneDay) - now;
                 const hours = Math.floor(remain / (1000 * 60 * 60));
                 timer.innerText = `${hours}시간 뒤에 다시 채굴 가능합니다.`;
@@ -308,11 +328,13 @@
             btn.disabled = true;
             btn.innerText = "⛏️ 채굴 중...";
 
-            // DB 함수 호출
+            // DB 함수 호출 (Supabase SQL 함수 필요)
             const { data, error } = await supabase.rpc('daily_mining');
 
             if (error) {
-                alert("채굴 시스템 오류: " + error.message);
+                // SQL 함수가 없으면 에러가 남
+                console.error(error);
+                alert("채굴 시스템 오류: DB 함수가 설정되지 않았습니다.");
                 btn.disabled = false;
             } else if (data === -1) {
                 alert("오늘은 이미 채굴했습니다. 내일 다시 오세요!");
