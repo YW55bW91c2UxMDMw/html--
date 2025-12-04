@@ -28,7 +28,6 @@
             font-family: 'Pretendard', sans-serif;
             background-color: var(--bg-deep);
             color: var(--text-main);
-            /* 우주 배경 효과 */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
@@ -53,96 +52,97 @@
         .top-bar a:hover { color: var(--accent); }
         .logo { font-weight: 900; color: var(--accent); letter-spacing: 1px; margin-right: 20px; }
 
-        /* 메인 컨테이너 */
         .container {
-            max-width: 900px;
-            margin: 100px auto 50px auto;
-            padding: 0 20px;
+            max-width: 900px; margin: 100px auto 50px auto; padding: 0 20px;
+        }
+
+        /* 프로필 헤더 섹션 */
+        .profile-header {
+            display: flex; align-items: center; gap: 20px; margin-bottom: 30px;
+            background: var(--bg-card); padding: 30px; border-radius: 20px;
+            border: 1px solid var(--glass-border); backdrop-filter: blur(10px);
+            position: relative; overflow: hidden;
+        }
+        .profile-avatar {
+            width: 80px; height: 80px; background: #000; border-radius: 50%;
+            border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .profile-info h1 { margin: 0; font-size: 1.8rem; color: white; display: flex; align-items: center; gap: 10px; }
+        .profile-info p { margin: 5px 0 0 0; color: var(--text-sub); font-size: 0.9rem; }
+        .edit-btn { 
+            font-size: 0.8rem; background: transparent; border: 1px solid var(--glass-border); 
+            color: var(--text-sub); padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px;
+        }
+        .edit-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* 카드 그리드 */
+        .grid-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;
         }
 
         /* 카드 공통 스타일 */
         .card {
-            background: var(--bg-card);
-            border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
+            background: var(--bg-card); border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 25px; box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px); position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
         }
-        /* 카드 상단 네온 바 효과 */
         .card::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
             background: linear-gradient(90deg, transparent, var(--accent), transparent);
         }
-
         .card h2 { 
-            margin-top: 0; margin-bottom: 20px;
-            color: var(--accent); font-size: 1.5rem; 
-            text-shadow: 0 0 10px var(--accent-glow);
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 15px;
+            margin-top: 0; margin-bottom: 20px; color: var(--accent); font-size: 1.2rem; 
+            text-shadow: 0 0 10px var(--accent-glow); border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;
         }
 
-        /* 자산 대시보드 */
-        .wallet-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .asset-box {
-            background: rgba(0,0,0,0.3);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid var(--glass-border);
-            transition: 0.3s;
-        }
-        .asset-box:hover { border-color: var(--accent); transform: translateY(-3px); }
-        
-        .asset-label { display: block; font-size: 0.9em; color: var(--text-sub); margin-bottom: 10px; }
-        .asset-value { font-size: 2rem; font-weight: bold; }
+        /* 자산 박스 */
+        .asset-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .asset-value { font-size: 1.5rem; font-weight: bold; }
         .money { color: var(--win-color); text-shadow: 0 0 10px rgba(0, 255, 157, 0.3); }
         .token { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
 
-        /* 환전소 버튼 */
-        .exchange-controls {
-            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;
+        /* 버튼 스타일 */
+        .btn {
+            padding: 10px 15px; font-size: 0.9rem; font-weight: bold;
+            background: linear-gradient(135deg, var(--accent), #006eff);
+            color: #000; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s;
+            text-align: center; width: 100%; margin-top: auto;
         }
-        .exchange-btn {
-            background: linear-gradient(135deg, #006eff, #00d4ff);
-            color: black; border: none; padding: 12px 25px; border-radius: 8px;
-            cursor: pointer; font-weight: bold; font-family: inherit; font-size: 1rem;
-            transition: 0.3s; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
-        }
-        .exchange-btn:hover { 
-            transform: translateY(-2px); box-shadow: 0 0 25px var(--accent-glow); color: white;
-        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px var(--accent-glow); color: white; }
+        .btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
 
-        /* 전적 리스트 테이블 */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { 
-            text-align: left; padding: 15px; 
-            color: var(--accent); font-size: 0.9rem; 
-            border-bottom: 2px solid var(--glass-border);
+        .btn-outline {
+            background: transparent; border: 1px solid var(--glass-border); color: var(--text-sub);
         }
-        td { 
-            padding: 15px; border-bottom: 1px solid var(--glass-border); 
-            color: var(--text-main); font-size: 0.95rem;
-        }
-        tr:hover td { background: rgba(255,255,255,0.05); }
-        
-        .win { color: var(--win-color); font-weight: bold; }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* 테이블 */
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { text-align: left; padding: 10px; color: var(--accent); border-bottom: 1px solid var(--glass-border); }
+        td { padding: 10px; border-bottom: 1px solid var(--glass-border); color: var(--text-main); }
+        .win { color: var(--win-color); }
         .lose { color: var(--lose-color); }
-        .empty-msg { text-align: center; color: var(--text-sub); padding: 40px; }
+        
+        /* 모달 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        .modal-box {
+            background: #101020; border: 1px solid var(--accent); padding: 30px; border-radius: 15px;
+            width: 90%; max-width: 400px; box-shadow: 0 0 30px var(--accent-glow);
+        }
+        input {
+            width: 100%; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
+            color: white; border-radius: 5px; margin-bottom: 15px; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
 
-        /* 모바일 대응 */
         @media (max-width: 600px) {
-            .wallet-grid { grid-template-columns: 1fr; }
-            .exchange-controls { flex-direction: column; }
-            th, td { padding: 10px; font-size: 0.85rem; }
+            .profile-header { flex-direction: column; text-align: center; }
+            .grid-container { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -151,36 +151,62 @@
     <nav class="top-bar">
         <a href="/" class="logo">🦊 JINDOSTAR</a>
         <a href="/">메인으로</a>
-        <a href="game.html">게임하기</a> <a href="#" style="color:var(--accent);">마이페이지</a>
+        <a href="game.html">게임하기</a>
+        <a href="#" style="color:var(--accent);">마이페이지</a>
     </nav>
 
     <div class="container">
-        <div class="card">
-            <h2>내 지갑 (MY WALLET)</h2>
-            <div class="wallet-grid">
-                <div class="asset-box">
-                    <span class="asset-label">보유 현금 (KRW)</span>
-                    <span id="my-money" class="asset-value money">Loading...</span>
+        <div class="profile-header">
+            <div class="profile-avatar">👨‍🚀</div>
+            <div class="profile-info">
+                <h1>
+                    <span id="display-nick">탐사대원</span>
+                    <button class="edit-btn" onclick="openNickModal()">✏️ 수정</button>
+                </h1>
+                <p id="display-email">user@jindostar.com</p>
+                <p style="font-size:0.8rem; color:#666; margin-top:5px;">UID: <span id="display-uid">...</span></p>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <div class="card">
+                <h2>MY WALLET</h2>
+                <div class="asset-row">
+                    <span style="color:var(--text-sub);">보유 현금</span>
+                    <span class="asset-value money"><span id="my-money">0</span> ₩</span>
                 </div>
-                <div class="asset-box">
-                    <span class="asset-label">보유 토큰 (TOKEN)</span>
-                    <span id="my-token" class="asset-value token">Loading...</span> 🪙
+                <div class="asset-row">
+                    <span style="color:var(--text-sub);">보유 토큰</span>
+                    <span class="asset-value token"><span id="my-token">0</span> 🪙</span>
+                </div>
+                <button class="btn btn-outline" onclick="alert('환전소는 게임 페이지에서 이용 가능합니다.')">환전하러 가기</button>
+            </div>
+
+            <div class="card">
+                <h2>DAILY MINING ⛏️</h2>
+                <div style="text-align:center; padding:10px;">
+                    <p style="color:var(--text-sub); margin-bottom:20px;">
+                        행성에서 자원을 채굴하여<br>무료 토큰을 획득하세요! (1일 1회)
+                    </p>
+                    <button id="mining-btn" class="btn" onclick="doMining()">🚀 채굴 시작 (Click)</button>
+                    <p id="mining-timer" style="color:var(--lose-color); font-size:0.8rem; margin-top:10px; display:none;">
+                        이미 채굴했습니다. 내일 다시 오세요.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>INVENTORY 🎒</h2>
+                <div style="text-align:center; color:#555; padding:30px 0;">
+                    <div style="font-size:2rem; margin-bottom:10px;">🔒</div>
+                    아이템 보관함이 잠겨있습니다.<br>
+                    (업데이트 예정)
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>토큰 환전소 (EXCHANGE)</h2>
-            <p style="color:var(--text-sub); text-align:center;">1 TOKEN = 1,000 KRW</p>
-            <div class="exchange-controls">
-                <button class="exchange-btn" onclick="buyToken(10)">10개 (1만원)</button>
-                <button class="exchange-btn" onclick="buyToken(50)">50개 (5만원)</button>
-                <button class="exchange-btn" onclick="buyToken(100)">100개 (10만원)</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>최근 게임 기록 (HISTORY)</h2>
+            <h2>GAME HISTORY</h2>
             <div style="overflow-x: auto;">
                 <table id="history-table">
                     <thead>
@@ -191,110 +217,171 @@
                             <th>TIME</th>
                         </tr>
                     </thead>
-                    <tbody id="history-list">
-                        </tbody>
+                    <tbody id="history-list"></tbody>
                 </table>
             </div>
-            <div id="empty-history" class="empty-msg" style="display:none;">아직 기록된 게임이 없습니다.</div>
+            <div id="empty-history" style="text-align:center; padding:20px; color:#555; display:none;">기록이 없습니다.</div>
+        </div>
+    </div>
+
+    <div id="nick-modal" class="modal">
+        <div class="modal-box">
+            <h3 style="color:white; margin-top:0;">닉네임 변경</h3>
+            <input type="text" id="new-nickname" placeholder="새 닉네임 입력 (최대 10자)">
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="updateNickname()">변경하기</button>
+                <button class="btn btn-outline" onclick="document.getElementById('nick-modal').style.display='none'">취소</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // =================================================
-        // [필수] 본인의 Supabase 키로 교체하세요!
-        // =================================================
-        const SUPABASE_URL = 'https://podegnqsxajvtegplsvo.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
-        // =================================================
+        // ★ Supabase 키 설정 (본인 것으로 교체!)
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 1. 내 정보 불러오기
-        async function loadMyPage() {
+        // 페이지 로드 시
+        window.onload = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-
             if (!user) {
-                if(confirm("로그인이 필요합니다. 메인으로 이동하시겠습니까?")) {
-                    location.href = 'index.html';
-                }
+                alert("로그인이 필요합니다.");
+                location.href = 'index.html';
                 return;
             }
 
-            // 지갑 정보 조회
-            const { data: profile } = await supabase
+            // 기본 정보 표시
+            document.getElementById('display-email').innerText = user.email;
+            document.getElementById('display-uid').innerText = user.id.slice(0, 8) + "...";
+
+            loadProfile(user.id);
+            loadHistory(user.id);
+        };
+
+        // 프로필 정보 불러오기
+        async function loadProfile(userId) {
+            const { data, error } = await supabase
                 .from('profiles')
-                .select('money, token')
-                .eq('id', user.id)
+                .select('*')
+                .eq('id', userId)
                 .single();
 
-            if (profile) {
-                document.getElementById('my-money').innerText = profile.money.toLocaleString();
-                document.getElementById('my-token').innerText = profile.token.toLocaleString();
+            if (data) {
+                document.getElementById('my-money').innerText = data.money.toLocaleString();
+                document.getElementById('my-token').innerText = data.token.toLocaleString();
+                document.getElementById('display-nick').innerText = data.nickname || '이름 없는 탐사대원';
+                
+                // 채굴 가능 여부 확인
+                checkMiningStatus(data.last_mined_at);
             }
-
-            // 전적 기록 조회
-            loadHistory(user.id);
         }
 
-        // 2. 전적 기록 불러오기 함수
+        // 채굴 상태 확인 (24시간 체크)
+        function checkMiningStatus(lastMined) {
+            const btn = document.getElementById('mining-btn');
+            const timer = document.getElementById('mining-timer');
+            
+            if (!lastMined) return; // 채굴한 적 없으면 버튼 활성화 유지
+
+            const lastDate = new Date(lastMined);
+            const now = new Date();
+            const diff = now - lastDate; // 밀리초 차이
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            if (diff < oneDay) {
+                // 아직 하루 안 지남
+                btn.disabled = true;
+                btn.innerText = "⏳ 충전 중...";
+                timer.style.display = 'block';
+                
+                // 남은 시간 계산 (선택사항)
+                const remain = new Date(lastDate.getTime() + oneDay) - now;
+                const hours = Math.floor(remain / (1000 * 60 * 60));
+                timer.innerText = `${hours}시간 뒤에 다시 채굴 가능합니다.`;
+            }
+        }
+
+        // [기능 1] 일일 채굴 실행
+        async function doMining() {
+            const btn = document.getElementById('mining-btn');
+            btn.disabled = true;
+            btn.innerText = "⛏️ 채굴 중...";
+
+            // DB 함수 호출
+            const { data, error } = await supabase.rpc('daily_mining');
+
+            if (error) {
+                alert("채굴 시스템 오류: " + error.message);
+                btn.disabled = false;
+            } else if (data === -1) {
+                alert("오늘은 이미 채굴했습니다. 내일 다시 오세요!");
+                location.reload();
+            } else {
+                alert(`🎉 채굴 성공! +${data} 토큰을 획득했습니다.`);
+                location.reload(); // 새로고침해서 잔액 갱신
+            }
+        }
+
+        // [기능 2] 닉네임 변경
+        function openNickModal() {
+            document.getElementById('nick-modal').style.display = 'flex';
+        }
+
+        async function updateNickname() {
+            const newNick = document.getElementById('new-nickname').value.trim();
+            if (!newNick) return alert("닉네임을 입력하세요.");
+            if (newNick.length > 10) return alert("10자 이내로 입력하세요.");
+
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            const { error } = await supabase
+                .from('profiles')
+                .update({ nickname: newNick })
+                .eq('id', user.id);
+
+            if (error) {
+                alert("변경 실패: " + error.message);
+            } else {
+                alert("닉네임이 변경되었습니다.");
+                document.getElementById('display-nick').innerText = newNick;
+                document.getElementById('nick-modal').style.display = 'none';
+            }
+        }
+
+        // [기능 3] 전적 기록
         async function loadHistory(userId) {
-            const { data: logs, error } = await supabase
+            const { data: logs } = await supabase
                 .from('game_logs')
                 .select('*')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false }) // 최신순 정렬
-                .limit(10); // 최근 10개만
+                .order('created_at', { ascending: false })
+                .limit(10);
 
             const list = document.getElementById('history-list');
-            const emptyMsg = document.getElementById('empty-history');
-            list.innerHTML = '';
-
             if (!logs || logs.length === 0) {
-                emptyMsg.style.display = 'block';
+                document.getElementById('empty-history').style.display = 'block';
                 return;
             }
 
-            emptyMsg.style.display = 'none';
-
             logs.forEach(log => {
                 const row = document.createElement('tr');
+                let resultHtml = log.result_amount > 0 
+                    ? `<span class="win">+${log.result_amount}</span>` 
+                    : `<span class="lose">-${log.bet_amount}</span>`;
                 
-                // 승패 여부 스타일링
-                let resultText = '';
-                if (log.result_amount > 0) {
-                    resultText = `<span class="win">+${log.result_amount} 🪙</span>`;
-                } else {
-                    resultText = `<span class="lose">-${log.bet_amount} 꽝</span>`;
-                }
-
-                // 날짜 포맷팅 (MM/DD HH:mm)
                 const date = new Date(log.created_at);
-                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()}`;
+                const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
 
                 row.innerHTML = `
-                    <td style="color:white; font-weight:bold;">${log.game_name}</td>
-                    <td>${log.bet_amount.toLocaleString()}</td>
-                    <td>${resultText}</td>
+                    <td style="font-weight:bold; color:#fff;">${log.game_name}</td>
+                    <td>${log.bet_amount}</td>
+                    <td>${resultHtml}</td>
                     <td style="color:var(--text-sub); font-size:0.8em;">${dateStr}</td>
                 `;
                 list.appendChild(row);
             });
         }
-
-        // 3. 환전 함수 (RPC 호출)
-        async function buyToken(count) {
-            const { error } = await supabase.rpc('exchange_token', { count: count });
-            if (error) {
-                alert("현금이 부족하거나 오류가 발생했습니다.");
-            } else {
-                alert(`✅ 토큰 ${count}개 구매 완료!`);
-                loadMyPage(); // 화면 갱신
-            }
-        }
-
-        // 페이지 로드 시 실행
-        loadMyPage();
     </script>
-
 </body>
 </html>
