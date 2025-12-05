@@ -9,7 +9,7 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="wallet.js"></script>
+    <script src="wallet.js" onerror="console.log('wallet.js not found')"></script>
     <style>
         /* 🌌 [JindoStar 우주 테마 시스템] */
         :root {
@@ -67,16 +67,20 @@
         /* 상단 로그인/회원가입 버튼 영역 */
         .auth-bar {
             position: absolute; top: 20px; right: 20px;
-            display: flex; gap: 10px; z-index: 100;
+            display: flex; gap: 10px; z-index: 100; align-items: center;
         }
         .auth-btn {
             background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
             color: var(--text-sub); padding: 8px 15px; border-radius: 20px;
-            font-size: 0.85rem; cursor: pointer; transition: 0.3s; text-decoration: none;
+            font-size: 0.85rem; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block;
         }
         .auth-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 212, 255, 0.1); }
         .auth-btn.primary { background: var(--accent); color: #000; border: none; font-weight: bold; }
         .auth-btn.primary:hover { background: white; box-shadow: 0 0 15px var(--accent-glow); }
+        
+        /* 관리자 버튼 스타일 */
+        .auth-btn.admin { background: #ff0040; color: white; border: none; font-weight: bold; box-shadow: 0 0 10px rgba(255, 0, 64, 0.5); }
+        .auth-btn.admin:hover { background: #ff4070; transform: scale(1.05); }
 
         /* 링크 카드 컨테이너 */
         .link-container {
@@ -183,19 +187,19 @@
                 </div>
             </a>
 
-            <a href="trans.html" class="link-card">
-                <img src="img/rumi_dprk.png" alt="바른 말 교정기">
+            <a href="mail.html" class="link-card" style="border-color: #00ff9d;">
+                <img src="img/rumi_mail.png" alt="메일" style="filter: hue-rotate(40deg);">
                 <div class="link-text">
-                    <span class="link-title">바른 말 교정기</span>
-                    <span class="link-desc">아름다운 우리 말</span>
+                    <span class="link-title" style="color:#00ff9d;">JINDO MAIL</span>
+                    <span class="link-desc">폐쇄형 암호화 메일</span>
                 </div>
             </a>
 
-            <a href="capsule.html" class="link-card">
-                <img src="img/rumi_capsule.png" alt="타임갭슐">
+            <a href="game.html" class="link-card">
+                <img src="img/rumi_game.png" alt="도박">
                 <div class="link-text">
-                    <span class="link-title">타임 캡슐</span>
-                    <span class="link-desc">미래의 당신에게 편지를 쓰세요</span>
+                    <span class="link-title">RUMI RACING</span>
+                    <span class="link-desc">도박 & 레이싱 게임</span>
                 </div>
             </a>
 
@@ -209,11 +213,35 @@
         </div>
 
         <div id="hidden-menu" class="link-container" style="display: none; margin-top: 25px; opacity: 0; transition: opacity 0.5s ease;">
-            <a href="#" onclick="goRandomPage(); return false;" class="link-card" style="border-color: var(--accent);">
-                <img src="img/rumi_random.png" alt="랜덤 워프">
+            <a href="exchange.html" class="link-card" style="border-color: gold;">
+                <div style="font-size:2.5rem; margin-right:20px;">📈</div>
                 <div class="link-text">
-                    <span class="link-title">I'm Feeling Foxy!</span>
-                    <span class="link-desc">랜덤 페이지로 워프</span>
+                    <span class="link-title" style="color:gold;">EXCHANGE</span>
+                    <span class="link-desc">토큰 거래소</span>
+                </div>
+            </a>
+
+            <a href="mining.html" class="link-card" style="border-color: #bf00ff;">
+                <div style="font-size:2.5rem; margin-right:20px;">⛏️</div>
+                <div class="link-text">
+                    <span class="link-title" style="color:#bf00ff;">GALAXY MINE</span>
+                    <span class="link-desc">우주 광산 (채굴)</span>
+                </div>
+            </a>
+
+            <a href="ranking.html" class="link-card" style="border-color: #ffd700;">
+                <div style="font-size:2.5rem; margin-right:20px;">🏆</div>
+                <div class="link-text">
+                    <span class="link-title" style="color:#ffd700;">HALL OF FAME</span>
+                    <span class="link-desc">명예의 전당</span>
+                </div>
+            </a>
+
+            <a href="capsule.html" class="link-card">
+                <img src="img/rumi_capsule.png" alt="타임갭슐">
+                <div class="link-text">
+                    <span class="link-title">타임 캡슐</span>
+                    <span class="link-desc">미래로 보내는 편지</span>
                 </div>
             </a>
 
@@ -221,7 +249,7 @@
                 <img src="img/rumi_jindoflix.png" alt="루미 넷플릭스">
                 <div class="link-text">
                     <span class="link-title">JINDOFLIX</span>
-                    <span class="link-desc">우주 테마 스트리밍 & 비디오</span>
+                    <span class="link-desc">우주 테마 스트리밍</span>
                 </div>
             </a>
 
@@ -229,15 +257,7 @@
                 <img src="img/rumi_pirate.png" alt="해적 루미">
                 <div class="link-text">
                     <span class="link-title">파일 공유</span>
-                    <span class="link-desc">자신의 창작물을 공유하세요</span>
-                </div>
-            </a>
-
-            <a href="exchange.html" class="link-card" style="border-color: gold;">
-                <div style="font-size:2.5rem; margin-right:20px;">📈</div>
-                <div class="link-text">
-                    <span class="link-title" style="color:gold;">EXCHANGE</span>
-                    <span class="link-desc">토큰 거래소</span>
+                    <span class="link-desc">P2P 파일 저장소</span>
                 </div>
             </a>
         </div>
@@ -249,7 +269,8 @@
             <h2 id="modal-title" class="modal-title">LOGIN</h2>
             
             <div class="input-group">
-                <label>ID</label> <input type="text" id="auth-email" class="modal-input" placeholder="아이디 (예: neo)">
+                <label>ID</label>
+                <input type="text" id="auth-email" class="modal-input" placeholder="아이디 (예: neo)">
             </div>
             <div class="input-group">
                 <label>Password</label>
@@ -274,33 +295,47 @@
         // =================================================
         
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
-        let isLoginMode = true; // 현재 모드 (true: 로그인, false: 회원가입)
+        let isLoginMode = true;
 
-        // 1. 페이지 로드 시 로그인 상태 확인
+        // 1. 페이지 로드 시 상태 확인
         window.onload = async function() {
             checkUserStatus();
         };
 
-        // 2. 유저 상태 확인 및 UI 업데이트
+        // 2. 유저 상태 확인 및 ADMIN 버튼 표시
         async function checkUserStatus() {
             const { data: { user } } = await client.auth.getUser();
             const ui = document.getElementById('auth-ui');
 
             if (user) {
-                // 로그인 상태
+                // 관리자 여부 확인
+                const { data: profile } = await client
+                    .from('profiles')
+                    .select('is_admin')
+                    .eq('id', user.id)
+                    .single();
+
+                let adminBtn = '';
+                // 관리자일 경우 버튼 생성
+                if (profile && profile.is_admin) {
+                    adminBtn = `<a href="admin.html" class="auth-btn admin">ADMIN CONSOLE</a>`;
+                }
+
+                // 로그인 UI
                 ui.innerHTML = `
+                    ${adminBtn}
                     <a href="mypage.html" class="auth-btn">마이페이지</a>
                     <button onclick="handleLogout()" class="auth-btn primary">로그아웃</button>
                 `;
             } else {
-                // 비로그인 상태
+                // 비로그인 UI
                 ui.innerHTML = `
                     <button onclick="openAuthModal()" class="auth-btn primary">로그인 / 가입</button>
                 `;
             }
         }
 
-        // 3. 모달 제어 함수
+        // 3. 모달 제어
         function openAuthModal() {
             document.getElementById('auth-modal').style.display = 'flex';
         }
@@ -308,7 +343,7 @@
             document.getElementById('auth-modal').style.display = 'none';
         }
 
-        // 4. 로그인 <-> 회원가입 모드 전환
+        // 4. 모드 전환
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
             const title = document.getElementById('modal-title');
@@ -329,86 +364,73 @@
             }
         }
 
-        // 5. 로그인 또는 회원가입 처리 (핵심 로직)
-        // index.html의 <script> 내부 handleAuth 함수를 이걸로 교체하세요!
+        // 5. 로그인/회원가입 (아이디로 처리)
+        async function handleAuth() {
+            let inputId = document.getElementById('auth-email').value.trim().toLowerCase();
+            const password = document.getElementById('auth-password').value;
 
-async function handleAuth() {
-    let inputId = document.getElementById('auth-email').value.trim().toLowerCase();
-    const password = document.getElementById('auth-password').value;
+            if (!inputId || !password) return alert("아이디와 비밀번호를 입력해주세요.");
 
-    if (!inputId || !password) return alert("아이디와 비밀번호를 입력해주세요.");
+            // 이메일 형식이면 앞부분만 추출
+            if (inputId.includes('@')) inputId = inputId.split('@')[0];
 
-    // 혹시 유저가 이메일 형식을 다 썼다면 @앞부분만 가져오기
-    if (inputId.includes('@')) {
-        inputId = inputId.split('@')[0];
-    }
+            // 내부 인증용 가짜 이메일
+            const authEmail = `${inputId}@example.com`;
 
-    // 내부 인증용 이메일로 변환
-    const authEmail = `${inputId}@example.com`;
-
-    if (isLoginMode) {
-        // 로그인 시도
-        const { data, error } = await client.auth.signInWithPassword({
-            email: authEmail,
-            password: password
-        });
-        if (error) {
-            // 에러 메시지 한글화
-            if(error.message.includes("Invalid login credentials")) {
-                alert("로그인 실패: 아이디나 비밀번호가 틀렸습니다.");
-            } else {
-                alert("로그인 오류: " + error.message);
-            }
-        } else {
-            closeAuthModal();
-            checkUserStatus();
-            if (typeof loadWallet === 'function') loadWallet();
-        }
-    } else {
-        // 메인화면에서의 회원가입 시도 (mail.html과 동일한 로직 적용)
-        const { data, error } = await client.auth.signUp({
-            email: authEmail,
-            password: password
-        });
-        if (error) {
-            alert("가입 실패: " + error.message);
-        } else {
-            // 프로필 생성
-            if (data.user) {
-                await client.from('profiles').upsert({ 
-                    id: data.user.id, 
-                    username: inputId, 
-                    nickname: inputId, 
-                    money: 100000, 
-                    token: 0 
+            if (isLoginMode) {
+                // 로그인 시도
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: authEmail,
+                    password: password
                 });
-                alert("회원가입 성공! 자동 로그인됩니다.");
-                closeAuthModal();
-                checkUserStatus();
-                if (typeof loadWallet === 'function') loadWallet();
-            }
-        }
-    }
-}
-
-        // 6. 로그아웃 처리
-        async function handleLogout() {
-            if (confirm("정말 로그아웃 하시겠습니까?")) {
-                const { error } = await client.auth.signOut();
-                if (!error) {
+                if (error) {
+                    if(error.message.includes("Invalid login credentials")) {
+                        alert("로그인 실패: 아이디 또는 비밀번호가 틀렸습니다.");
+                    } else {
+                        alert("오류: " + error.message);
+                    }
+                } else {
+                    closeAuthModal();
                     checkUserStatus();
-                    alert("로그아웃 되었습니다.");
-                    // 페이지 새로고침 (지갑 정보 등 초기화 위해)
-                    location.reload();
+                    if (typeof loadWallet === 'function') loadWallet();
+                }
+            } else {
+                // 회원가입 시도
+                const { data, error } = await client.auth.signUp({
+                    email: authEmail,
+                    password: password
+                });
+                if (error) {
+                    alert("가입 실패: " + error.message);
+                } else {
+                    // 프로필 생성 (가짜 이메일 대신 아이디 저장)
+                    if (data.user) {
+                        await client.from('profiles').upsert({ 
+                            id: data.user.id, 
+                            username: inputId, 
+                            nickname: inputId, 
+                            money: 100000, 
+                            token: 0 
+                        });
+                        alert("회원가입 성공! 자동 로그인됩니다.");
+                        closeAuthModal();
+                        checkUserStatus();
+                        if (typeof loadWallet === 'function') loadWallet();
+                    }
                 }
             }
         }
 
-        // 7. 더보기 메뉴 토글 함수 (기존)
+        async function handleLogout() {
+            if (confirm("정말 로그아웃 하시겠습니까?")) {
+                await client.auth.signOut();
+                location.reload();
+            }
+        }
+
         function toggleMoreMenu() {
             const menu = document.getElementById('hidden-menu');
             const btnText = document.getElementById('more-text');
-
             if (menu.style.display === 'none') {
                 menu.style.display = 'grid';
                 setTimeout(() => { menu.style.opacity = '1'; }, 10);
@@ -420,12 +442,8 @@ async function handleAuth() {
             }
         }
 
-        // 8. 랜덤 이동 함수 (기존)
         function goRandomPage() {
-            const pages = [
-                'board.html', 'software.html', 'chat.html', 'dansen.html',
-                'cal.html', 'mad.html', 'trans.html', 'video.html',
-            ];
+            const pages = ['board.html', 'software.html', 'chat.html', 'dansen.html', 'cal.html', 'mad.html', 'trans.html', 'video.html'];
             const randomIndex = Math.floor(Math.random() * pages.length);
             window.location.href = pages[randomIndex];
         }
