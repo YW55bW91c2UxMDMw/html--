@@ -5,7 +5,10 @@
     <title>JINDOSTAR - 마이 페이지</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="wallet.js"></script>
+
     <style>
         /* 🌌 [Deep Space Design System] */
         :root {
@@ -29,7 +32,6 @@
             font-family: 'Pretendard', sans-serif;
             background-color: var(--bg-deep);
             color: var(--text-main);
-            /* 우주 배경 효과 */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
@@ -155,6 +157,7 @@
         <a href="/">메인으로</a>
         <a href="game.html">게임하기</a>
         <a href="#" style="color:var(--accent);">마이페이지</a>
+        <div id="auth-ui" style="margin-left: auto;"></div>
     </nav>
 
     <div class="container">
@@ -165,7 +168,7 @@
                     <span id="display-nick">데이터 로딩중...</span>
                     <button class="edit-btn" onclick="openNickModal()">✏️ 수정</button>
                 </h1>
-                <p id="display-email">user@jindostar.com</p>
+                <p id="display-email">user@jindostar.net</p>
                 <p style="font-size:0.8rem; color:#666; margin-top:5px;">
                     UID: <span id="display-uid">...</span>
                 </p>
@@ -244,44 +247,40 @@
     </div>
 
     <script>
-        // ★ Supabase 키 설정 (반드시 본인 것으로 유지!)
-        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
-        
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // [중요] wallet.js가 로드된 후에 실행될 함수입니다.
+        // wallet.js 내부의 window.onload에서 호출합니다.
+        function initPage() {
+            setTimeout(async () => {
+                // wallet.js에서 생성한 window.client 사용
+                if (!window.client) return console.error("wallet.js가 로드되지 않았습니다.");
 
-        // 페이지 로드 시
-        window.onload = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                alert("로그인이 필요합니다.");
-                location.href = 'index.html';
-                return;
-            }
+                const { data: { user } } = await window.client.auth.getUser();
+                if (!user) {
+                    alert("로그인이 필요합니다.");
+                    location.href = 'index.html';
+                    return;
+                }
 
-            // 기본 정보 표시
-            document.getElementById('display-email').innerText = user.email;
-            document.getElementById('display-uid').innerText = user.id.slice(0, 8) + "...";
+                // 기본 정보 표시
+                document.getElementById('display-email').innerText = user.email;
+                document.getElementById('display-uid').innerText = user.id.slice(0, 8) + "...";
 
-            loadProfile(user.id);
-            loadHistory(user.id);
-        };
+                // 프로필 상세 및 히스토리 로드
+                loadProfileDetail(user.id);
+                loadHistory(user.id);
+            }, 500); // wallet.js 초기화 대기
+        }
 
-        // 프로필 정보 불러오기
-        async function loadProfile(userId) {
-            // stardust 컬럼까지 불러오도록 쿼리 확인
-            const { data, error } = await supabase
+        // 상세 프로필 정보 불러오기 (지갑 숫자는 wallet.js가 자동 갱신하므로 닉네임/채굴정보 위주)
+        async function loadProfileDetail(userId) {
+            const { data, error } = await window.client
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .single();
 
             if (data) {
-                document.getElementById('my-money').innerText = data.money.toLocaleString();
-                document.getElementById('my-token').innerText = data.token.toLocaleString();
-                // 새로 추가된 Stardust 표시 (없으면 0)
-                document.getElementById('my-stardust').innerText = (data.stardust || 0).toLocaleString();
-                
+                // 닉네임 표시
                 document.getElementById('display-nick').innerText = data.nickname || '이름 없는 탐사대원';
                 
                 // Jindo Mail 주소 표시
@@ -289,12 +288,15 @@
                     document.getElementById('display-mail-addr').innerText = data.username + "@jindostar.net";
                     document.getElementById('mail-addr-box').style.display = 'block';
                 }
-            } else {
-                console.log("프로필 데이터 로드 실패", error);
+                
+                // 지갑 UI 강제 업데이트 (wallet.js의 데이터가 아직 안 왔을 수 있으므로)
+                document.getElementById('my-money').innerText = data.money.toLocaleString();
+                document.getElementById('my-token').innerText = data.token.toLocaleString();
+                document.getElementById('my-stardust').innerText = (data.stardust || 0).toLocaleString();
             }
         }
 
-        // [기능 2] 닉네임 변경
+        // [기능] 닉네임 변경
         function openNickModal() {
             document.getElementById('nick-modal').style.display = 'flex';
         }
@@ -304,9 +306,9 @@
             if (!newNick) return alert("닉네임을 입력하세요.");
             if (newNick.length > 10) return alert("10자 이내로 입력하세요.");
 
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await window.client.auth.getUser();
             
-            const { error } = await supabase
+            const { error } = await window.client
                 .from('profiles')
                 .update({ nickname: newNick })
                 .eq('id', user.id);
@@ -320,9 +322,9 @@
             }
         }
 
-        // [기능 3] 전적 기록
+        // [기능] 전적 기록
         async function loadHistory(userId) {
-            const { data: logs } = await supabase
+            const { data: logs } = await window.client
                 .from('game_logs')
                 .select('*')
                 .eq('user_id', userId)
@@ -330,10 +332,14 @@
                 .limit(10);
 
             const list = document.getElementById('history-list');
+            list.innerHTML = ''; // 초기화
+
             if (!logs || logs.length === 0) {
                 document.getElementById('empty-history').style.display = 'block';
                 return;
             }
+            
+            document.getElementById('empty-history').style.display = 'none';
 
             logs.forEach(log => {
                 const row = document.createElement('tr');
