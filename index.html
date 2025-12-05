@@ -287,166 +287,69 @@
     </div>
 
     <script>
-        // =================================================
-        // [필수] 본인의 Supabase 키로 교체하세요!
-        // =================================================
-        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
-        // =================================================
-        
-        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
-        let isLoginMode = true;
+    let isLoginMode = true;
 
-        // 1. 페이지 로드 시 상태 확인
-        window.onload = async function() {
-            checkUserStatus();
-        };
+    // 모달 열기/닫기
+    function openAuthModal() {
+        document.getElementById('auth-modal').style.display = 'flex';
+    }
+    function closeAuthModal() {
+        document.getElementById('auth-modal').style.display = 'none';
+    }
 
-        // 2. 유저 상태 확인 및 ADMIN 버튼 표시
-        async function checkUserStatus() {
-            const { data: { user } } = await client.auth.getUser();
-            const ui = document.getElementById('auth-ui');
+    // 로그인 <-> 회원가입 전환
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
+        const title = document.getElementById('modal-title');
+        const btn = document.getElementById('auth-action-btn');
+        const msg = document.getElementById('toggle-msg');
+        const toggleBtn = document.getElementById('toggle-btn');
 
-            if (user) {
-                // 관리자 여부 확인
-                const { data: profile } = await client
-                    .from('profiles')
-                    .select('is_admin')
-                    .eq('id', user.id)
-                    .single();
-
-                let adminBtn = '';
-                // 관리자일 경우 버튼 생성
-                if (profile && profile.is_admin) {
-                    adminBtn = `<a href="admin.html" class="auth-btn admin">ADMIN CONSOLE</a>`;
-                }
-
-                // 로그인 UI
-                ui.innerHTML = `
-                    ${adminBtn}
-                    <a href="mypage.html" class="auth-btn">마이페이지</a>
-                    <button onclick="handleLogout()" class="auth-btn primary">로그아웃</button>
-                `;
-            } else {
-                // 비로그인 UI
-                ui.innerHTML = `
-                    <button onclick="openAuthModal()" class="auth-btn primary">로그인 / 가입</button>
-                `;
-            }
+        if (isLoginMode) {
+            title.innerText = "LOGIN";
+            btn.innerText = "로그인 (Sign In)";
+            msg.innerText = "아직 계정이 없으신가요?";
+            toggleBtn.innerText = "회원가입";
+        } else {
+            title.innerText = "SIGN UP";
+            btn.innerText = "회원가입 (Register)";
+            msg.innerText = "이미 계정이 있으신가요?";
+            toggleBtn.innerText = "로그인";
         }
+    }
 
-        // 3. 모달 제어
-        function openAuthModal() {
-            document.getElementById('auth-modal').style.display = 'flex';
+    // [핵심] 통합 로그인/가입 처리
+    async function handleAuth() {
+        // @ 뒷부분이나 공백 제거한 순수 ID만 추출
+        let inputId = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value;
+
+        if (inputId.includes('@')) inputId = inputId.split('@')[0];
+
+        if (isLoginMode) {
+            // wallet.js의 로그인 함수 호출
+            await systemLogin(inputId, password);
+        } else {
+            // wallet.js의 회원가입 함수 호출
+            await systemRegister(inputId, password);
         }
-        function closeAuthModal() {
-            document.getElementById('auth-modal').style.display = 'none';
+    }
+
+    function toggleMoreMenu() {
+        const menu = document.getElementById('hidden-menu');
+        if (menu.style.display === 'none') {
+            menu.style.display = 'grid';
+            setTimeout(() => { menu.style.opacity = '1'; }, 10);
+        } else {
+            menu.style.opacity = '0';
+            setTimeout(() => { menu.style.display = 'none'; }, 500);
         }
+    }
 
-        // 4. 모드 전환
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            const title = document.getElementById('modal-title');
-            const btn = document.getElementById('auth-action-btn');
-            const msg = document.getElementById('toggle-msg');
-            const toggleBtn = document.getElementById('toggle-btn');
-
-            if (isLoginMode) {
-                title.innerText = "LOGIN";
-                btn.innerText = "로그인 (Sign In)";
-                msg.innerText = "아직 계정이 없으신가요?";
-                toggleBtn.innerText = "회원가입";
-            } else {
-                title.innerText = "SIGN UP";
-                btn.innerText = "회원가입 (Register)";
-                msg.innerText = "이미 계정이 있으신가요?";
-                toggleBtn.innerText = "로그인";
-            }
-        }
-
-        // 5. 로그인/회원가입 (아이디로 처리)
-        async function handleAuth() {
-            let inputId = document.getElementById('auth-email').value.trim().toLowerCase();
-            const password = document.getElementById('auth-password').value;
-
-            if (!inputId || !password) return alert("아이디와 비밀번호를 입력해주세요.");
-
-            // 이메일 형식이면 앞부분만 추출
-            if (inputId.includes('@')) inputId = inputId.split('@')[0];
-
-            // 내부 인증용 가짜 이메일
-            const authEmail = `${inputId}@example.com`;
-
-            if (isLoginMode) {
-                // 로그인 시도
-                const { data, error } = await client.auth.signInWithPassword({
-                    email: authEmail,
-                    password: password
-                });
-                if (error) {
-                    if(error.message.includes("Invalid login credentials")) {
-                        alert("로그인 실패: 아이디 또는 비밀번호가 틀렸습니다.");
-                    } else {
-                        alert("오류: " + error.message);
-                    }
-                } else {
-                    closeAuthModal();
-                    checkUserStatus();
-                    if (typeof loadWallet === 'function') loadWallet();
-                }
-            } else {
-                // 회원가입 시도
-                const { data, error } = await client.auth.signUp({
-                    email: authEmail,
-                    password: password
-                });
-                if (error) {
-                    alert("가입 실패: " + error.message);
-                } else {
-                    // 프로필 생성 (가짜 이메일 대신 아이디 저장)
-                    if (data.user) {
-                        await client.from('profiles').upsert({ 
-                            id: data.user.id, 
-                            username: inputId, 
-                            nickname: inputId, 
-                            money: 100000, 
-                            token: 0 
-                        });
-                        alert("회원가입 성공! 자동 로그인됩니다.");
-                        closeAuthModal();
-                        checkUserStatus();
-                        if (typeof loadWallet === 'function') loadWallet();
-                    }
-                }
-            }
-        }
-
-        async function handleLogout() {
-            if (confirm("정말 로그아웃 하시겠습니까?")) {
-                await client.auth.signOut();
-                location.reload();
-            }
-        }
-
-        function toggleMoreMenu() {
-            const menu = document.getElementById('hidden-menu');
-            const btnText = document.getElementById('more-text');
-            if (menu.style.display === 'none') {
-                menu.style.display = 'grid';
-                setTimeout(() => { menu.style.opacity = '1'; }, 10);
-                btnText.innerText = "Close Menu";
-            } else {
-                menu.style.opacity = '0';
-                setTimeout(() => { menu.style.display = 'none'; }, 500);
-                btnText.innerText = "Explore More";
-            }
-        }
-
-        function goRandomPage() {
-            const pages = ['board.html', 'software.html', 'chat.html', 'dansen.html', 'cal.html', 'mad.html', 'trans.html', 'video.html'];
-            const randomIndex = Math.floor(Math.random() * pages.length);
-            window.location.href = pages[randomIndex];
-        }
-    </script>
+    function goRandomPage() {
+        const pages = ['board.html', 'software.html', 'chat.html', 'dansen.html', 'cal.html', 'mad.html', 'trans.html', 'video.html'];
+        window.location.href = pages[Math.floor(Math.random() * pages.length)];
+    }
+</script>
 </body>
 </html>
