@@ -12,33 +12,52 @@
             --accent: #ff0040;
             --text-main: #ffffff;
             --glass-bg: rgba(40, 0, 0, 0.8);
+            --border: rgba(255, 0, 64, 0.3);
         }
         body {
             background: var(--bg-deep); color: var(--text-main); font-family: 'Pretendard';
             padding: 40px; text-align: center;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         
         h1 { color: var(--accent); font-size: 3rem; text-shadow: 0 0 20px var(--accent); margin-bottom: 40px; }
         
         .panel {
-            background: var(--glass-bg); border: 2px solid var(--accent);
-            padding: 30px; border-radius: 15px; margin-bottom: 20px;
-            box-shadow: 0 0 50px rgba(255, 0, 64, 0.2);
+            background: var(--glass-bg); border: 1px solid var(--accent);
+            padding: 30px; border-radius: 15px; margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(255, 0, 64, 0.1); text-align: left;
         }
+        .panel h2 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 15px; color: var(--accent); }
         
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .stat-box { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid #555; }
-        .stat-val { font-size: 2rem; font-weight: bold; color: var(--accent); }
+        /* 통계 그리드 */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px; }
+        .stat-box { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 1px solid #555; text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: bold; color: white; margin-top: 10px; }
 
-        .btn-admin {
-            background: var(--accent); color: white; border: none; padding: 15px 30px;
-            font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 5px;
-            width: 100%; transition: 0.3s;
+        /* 입력 및 버튼 */
+        input {
+            padding: 10px; width: 200px; background: #220000; border: 1px solid var(--accent); 
+            color: white; border-radius: 5px; outline: none;
         }
-        .btn-admin:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--accent); }
+        .btn-admin {
+            background: var(--accent); color: white; border: none; padding: 10px 20px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; border-radius: 5px;
+            transition: 0.3s;
+        }
+        .btn-admin:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
         
+        /* 유저 리스트 테이블 */
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        .user-table th { text-align: left; padding: 10px; color: var(--accent); border-bottom: 1px solid var(--border); }
+        .user-table td { padding: 10px; border-bottom: 1px solid #330000; }
+        .user-table tr:hover { background: rgba(255, 0, 64, 0.1); }
+        
+        .badge-admin { background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; }
+        .val-money { color: #00ff9d; }
+        .val-token { color: #ffd700; }
+
         .back-link { color: #666; text-decoration: none; display: inline-block; margin-top: 20px; }
+        .refresh-btn { float: right; font-size: 0.8rem; background: none; border: 1px solid #555; color: #aaa; cursor: pointer; padding: 5px 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -50,11 +69,11 @@
             <h2>SYSTEM STATUS</h2>
             <div class="stat-grid">
                 <div class="stat-box">
-                    <div>TOTAL USERS</div>
+                    <div style="color:#aaa;">TOTAL USERS</div>
                     <div id="stat-users" class="stat-val">Loading...</div>
                 </div>
                 <div class="stat-box">
-                    <div>TOTAL SUPPLY (TOKEN)</div>
+                    <div style="color:#aaa;">TOTAL SUPPLY (TOKEN)</div>
                     <div id="stat-tokens" class="stat-val">Loading...</div>
                 </div>
             </div>
@@ -62,16 +81,42 @@
 
         <div class="panel">
             <h2>EMERGENCY MINTING</h2>
-            <p>관리자 권한으로 토큰을 무제한 생성합니다.</p>
-            <input type="number" id="mint-amount" value="1000000" style="padding:10px; width:200px; margin-bottom:10px; background:#333; color:white; border:none;">
-            <button class="btn-admin" onclick="mintTokens()">GENERATE TOKENS</button>
+            <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px;">
+                관리자 권한으로 시장에 풀지 않고, <b>관리자 개인 지갑</b>으로 토큰을 생성합니다.
+            </p>
+            <input type="number" id="mint-amount" value="1000000">
+            <button class="btn-admin" onclick="mintTokens()">GENERATE</button>
+        </div>
+
+        <div class="panel">
+            <h2>
+                USER MANAGEMENT
+                <button class="refresh-btn" onclick="loadUserList()">🔄 새로고침</button>
+            </h2>
+            <div style="overflow-x: auto;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID (Username)</th>
+                            <th>Nickname</th>
+                            <th>Money (KRW)</th>
+                            <th>Token (JDS)</th>
+                            <th>Stardust</th>
+                            <th>Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list-body">
+                        <tr><td colspan="6" style="text-align:center; padding:20px;">데이터 로딩 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <a href="/" class="back-link">← Return to Main</a>
     </div>
 
     <script>
-        // ★ Supabase 설정
+        // ★ Supabase 설정 (본인 키로 교체!)
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -80,7 +125,7 @@
             const { data: { user } } = await client.auth.getUser();
             if (!user) { location.href = '/'; return; }
 
-            // 관리자 확인
+            // 관리자 여부 재확인
             const { data: profile } = await client.from('profiles').select('is_admin').eq('id', user.id).single();
             
             if (!profile || !profile.is_admin) {
@@ -90,24 +135,71 @@
             }
 
             loadStats();
+            loadUserList();
         };
 
+        // 전체 통계 로드
         async function loadStats() {
             const { data, error } = await client.rpc('get_market_stats');
             if (data) {
-                document.getElementById('stat-users').innerText = data.total_users;
-                document.getElementById('stat-tokens').innerText = data.total_tokens.toLocaleString();
+                document.getElementById('stat-users').innerText = data.total_users || '-';
+                document.getElementById('stat-tokens').innerText = (data.total_tokens || 0).toLocaleString();
             }
         }
 
+        // 회원 목록 로드 (핵심 기능)
+        async function loadUserList() {
+            const tbody = document.getElementById('user-list-body');
+            
+            // 아까 만든 SQL 함수 호출
+            const { data, error } = await client.rpc('get_admin_user_list');
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">로드 실패: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">회원이 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(user => {
+                const tr = document.createElement('tr');
+                
+                // 관리자 뱃지
+                const adminBadge = user.is_admin ? '<span class="badge-admin">ADMIN</span>' : '';
+                
+                // 날짜 포맷
+                const lastActive = user.last_mined_at 
+                    ? new Date(user.last_mined_at).toLocaleDateString() 
+                    : '-';
+
+                tr.innerHTML = `
+                    <td style="font-weight:bold; color:white;">${user.username || 'Unknown'} ${adminBadge}</td>
+                    <td>${user.nickname || '-'}</td>
+                    <td class="val-money">${user.money.toLocaleString()}</td>
+                    <td class="val-token">${user.token.toLocaleString()}</td>
+                    <td style="color:#bf00ff;">${user.stardust.toLocaleString()}</td>
+                    <td style="color:#888;">${lastActive}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 토큰 발행
         async function mintTokens() {
             const amount = document.getElementById('mint-amount').value;
+            if(!amount) return;
+
             const { error } = await client.rpc('admin_mint_token', { amount: parseInt(amount) });
             
             if (error) alert("오류: " + error.message);
             else {
-                alert(`✅ ${parseInt(amount).toLocaleString()} 토큰이 생성되었습니다.`);
-                loadStats();
+                alert(`✅ ${parseInt(amount).toLocaleString()} 토큰 생성 완료!`);
+                loadStats();     // 통계 갱신
+                loadUserList();  // 리스트 갱신 (내 잔고가 늘어났으니)
             }
         }
     </script>
