@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDO CASINO - Lobby</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="wallet.js"></script>
+
+    <style>
+        /* 🌌 Casino Lobby Theme */
+        :root {
+            --bg-deep: #050510;
+            --accent: #ff0055;       /* 카지노는 강렬한 핑크/레드 */
+            --accent-gold: #ffd700;
+            --glass-bg: rgba(30, 20, 40, 0.7);
+            --border: rgba(255, 0, 85, 0.3);
+            --text-main: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-deep); color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 20% 30%, #2a0010 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, #1a0030 0%, transparent 50%);
+            min-height: 100vh;
+        }
+
+        /* 상단 네비게이션 */
+        .top-bar {
+            padding: 15px 20px; background: rgba(0,0,0,0.8);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+        }
+        .logo { font-weight: 900; color: var(--accent); letter-spacing: 1px; font-size: 1.2rem; }
+        
+        .wallet-info { display: flex; gap: 15px; font-size: 0.9rem; font-weight: bold; }
+        .token-display { color: var(--accent-gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+
+        .container { max-width: 1000px; margin: 100px auto 50px auto; padding: 0 20px; text-align: center; }
+
+        .casino-header h1 {
+            font-size: 3rem; margin: 0;
+            background: linear-gradient(to right, #ff0055, #ffcc00);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 0, 85, 0.3);
+        }
+        .casino-header p { color: #aaa; margin-top: 10px; }
+
+        /* 게임 리스트 그리드 */
+        .game-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px; margin-top: 50px;
+        }
+
+        .game-card {
+            background: var(--glass-bg); border: 1px solid var(--border);
+            border-radius: 20px; overflow: hidden; position: relative;
+            transition: 0.3s; cursor: pointer; text-decoration: none; display: block;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
+            border-color: var(--accent);
+        }
+
+        .card-thumb {
+            width: 100%; height: 200px; object-fit: cover;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-info { padding: 20px; text-align: left; }
+        .game-title { font-size: 1.5rem; font-weight: 800; color: white; margin-bottom: 5px; }
+        .game-desc { font-size: 0.9rem; color: #bbb; }
+        
+        .badge {
+            position: absolute; top: 15px; right: 15px;
+            background: var(--accent-gold); color: black; font-weight: bold;
+            padding: 5px 10px; border-radius: 10px; font-size: 0.8rem;
+        }
+        .badge.soon { background: #555; color: #aaa; }
+
+        .btn-exchange {
+            margin-top: 40px;
+            display: inline-block; padding: 15px 30px; border-radius: 30px;
+            background: rgba(255,255,255,0.1); border: 1px solid white;
+            color: white; text-decoration: none; font-weight: bold; transition: 0.3s;
+        }
+        .btn-exchange:hover { background: white; color: black; }
+
+    </style>
+</head>
+<body>
+
+    <nav class="top-bar">
+        <a href="/" class="logo">🎰 JINDO CASINO</a>
+        <div class="wallet-info">
+            <span>MY TOKEN:</span>
+            <span class="token-display"><span id="my-token">0</span> JDS</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="casino-header">
+            <h1>GALAXY CASINO</h1>
+            <p>당신의 운을 시험하세요. 공정한 확률, 짜릿한 승부.</p>
+        </div>
+
+        <div class="game-grid">
+            <a href="도박/달팽이 레이싱/index.html" class="game-card">
+                <span class="badge">POPULAR 🔥</span>
+                <img src="img/rumi_racing.png" alt="Rumi Racing" class="card-thumb">
+                <div class="card-info">
+                    <div class="game-title">RUMI RACING</div>
+                    <div class="game-desc">우주 최속의 루미를 맞춰라! 최대 3배 배당.</div>
+                </div>
+            </a>
+
+            <div class="game-card" onclick="alert('오픈 준비 중입니다!')">
+                <span class="badge soon">COMING SOON</span>
+                <div style="width:100%; height:200px; background:#220011; display:flex; align-items:center; justify-content:center; font-size:3rem;">
+                    🎰
+                </div>
+                <div class="card-info">
+                    <div class="game-title">NEON SLOTS</div>
+                    <div class="game-desc">잭팟의 주인공은 바로 당신.</div>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="alert('오픈 준비 중입니다!')">
+                <span class="badge soon">COMING SOON</span>
+                <div style="width:100%; height:200px; background:#110022; display:flex; align-items:center; justify-content:center; font-size:3rem;">
+                    🃏
+                </div>
+                <div class="card-info">
+                    <div class="game-title">HIGH / LOW</div>
+                    <div class="game-desc">다음 카드는 높을까 낮을까?</div>
+                </div>
+            </div>
+        </div>
+
+        <a href="exchange.html" class="btn-exchange">🪙 토큰 환전소 가기</a>
+    </div>
+
+    <script>
+        // 지갑 정보 연동 (wallet.js가 로드되면 자동 실행)
+        // 화면 로드 시 토큰 업데이트
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const tokenEl = document.getElementById('my-token');
+                // wallet.js의 전역 변수 myWallet 참조
+                if(typeof myWallet !== 'undefined') {
+                    tokenEl.innerText = myWallet.token.toLocaleString();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
