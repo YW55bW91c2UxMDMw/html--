@@ -195,52 +195,66 @@
         };
 
         // [핵심] 실제 회원가입 함수
-        async function registerUser() {
-            const username = document.getElementById('new-username').value.trim().toLowerCase();
-            const password = document.getElementById('new-password').value;
+        // mail.html의 <script> 내부 registerUser 함수를 이걸로 교체하세요!
 
-            if(!username || !password) return alert("ID와 비밀번호를 입력하세요.");
-            if(/[^a-z0-9]/.test(username)) return alert("ID는 영문 소문자와 숫자만 가능합니다.");
-            if(password.length < 6) return alert("비밀번호는 6자리 이상이어야 합니다.");
+async function registerUser() {
+    // 공백 제거 및 소문자 변환
+    let username = document.getElementById('new-username').value.trim().toLowerCase();
+    const password = document.getElementById('new-password').value;
 
-            const email = `${username}@jindostar.net`;
+    // 실수로 @jindostar.net까지 입력했으면 ID만 남기기
+    if (username.includes('@')) {
+        username = username.split('@')[0];
+    }
 
-            // 1. Supabase Auth 회원가입 시도
-            const { data, error } = await client.auth.signUp({
-                email: email,
-                password: password
+    if (!username || !password) return alert("ID와 비밀번호를 입력하세요.");
+    
+    // ID 유효성 검사 (영문, 숫자, 언더바, 하이픈만 허용)
+    const idRegex = /^[a-z0-9_-]+$/;
+    if (!idRegex.test(username)) {
+        return alert("ID는 영문 소문자, 숫자, 특수문자(-_)만 사용할 수 있습니다.");
+    }
+    if (password.length < 6) return alert("비밀번호는 6자리 이상이어야 합니다.");
+
+    // [핵심] 실제 인증용 이메일 (example.com은 테스트용으로 안전함)
+    const authEmail = `${username}@example.com`;
+
+    // 1. Supabase Auth 회원가입 시도
+    const { data, error } = await client.auth.signUp({
+        email: authEmail,
+        password: password
+    });
+
+    if (error) {
+        alert("가입 실패: " + error.message);
+        return;
+    }
+
+    // 2. 프로필 테이블 등록 (유저에게 보이는 가짜 이메일 저장)
+    if (data.user) {
+        // 혹시 기존 프로필이 있으면 업데이트, 없으면 생성
+        const { error: upsertError } = await client
+            .from('profiles')
+            .upsert({ 
+                id: data.user.id, 
+                username: username,          // 실제 ID
+                nickname: username,          // 닉네임 초기화
+                money: 100000, 
+                token: 0,
+                // 여기에 멋진 가짜 이메일을 저장할 수도 있지만, 
+                // 보통 username + @jindostar.net 조합으로 보여주면 됩니다.
             });
 
-            if (error) {
-                alert("가입 실패: " + error.message);
-                return;
-            }
-
-            // 2. 프로필 테이블에 username 등록 (트리거가 없다면 수동 추가)
-            // (이미 trigger로 profiles가 생성되더라도 username은 비어있을 수 있으므로 update)
-            if (data.user) {
-                const { error: profileError } = await client
-                    .from('profiles')
-                    .update({ username: username, nickname: username }) // 닉네임도 ID로 초기화
-                    .eq('id', data.user.id);
-                
-                // 만약 update가 아니라 insert가 필요할 수도 있음 (상황에 따라)
-                if(profileError) {
-                    // 프로필이 아직 안 만들어졌을 경우를 대비해 insert 시도
-                    await client.from('profiles').insert({ 
-                        id: data.user.id, 
-                        username: username,
-                        nickname: username,
-                        money: 100000, 
-                        token: 0 
-                    });
-                }
-
-                alert(`환영합니다, ${username}님!\n이제 이 계정으로 사이트 전체를 이용할 수 있습니다.`);
-                document.getElementById('id-modal').style.display = 'none';
-                location.reload(); // 새로고침하여 로그인 상태 적용
-            }
+        if (upsertError) {
+            console.error("프로필 생성 오류:", upsertError);
+            // 프로필 오류가 나도 로그인은 되었으니 진행
         }
+
+        alert(`환영합니다, ${username}님!\n보안 계정 생성 완료.\n(ID: ${username} / PW: 설정한 비밀번호)`);
+        document.getElementById('id-modal').style.display = 'none';
+        location.reload(); 
+    }
+}
 
         // 로그인된 유저 프로필 확인
         async function checkProfile(user) {

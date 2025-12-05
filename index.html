@@ -249,8 +249,7 @@
             <h2 id="modal-title" class="modal-title">LOGIN</h2>
             
             <div class="input-group">
-                <label>E-Mail</label>
-                <input type="email" id="auth-email" class="modal-input" placeholder="user@jindostar.com">
+                <label>ID</label> <input type="text" id="auth-email" class="modal-input" placeholder="아이디 (예: neo)">
             </div>
             <div class="input-group">
                 <label>Password</label>
@@ -331,47 +330,66 @@
         }
 
         // 5. 로그인 또는 회원가입 처리 (핵심 로직)
-        async function handleAuth() {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
+        // index.html의 <script> 내부 handleAuth 함수를 이걸로 교체하세요!
 
-            if (!email || !password) return alert("이메일과 비밀번호를 입력해주세요.");
+async function handleAuth() {
+    let inputId = document.getElementById('auth-email').value.trim().toLowerCase();
+    const password = document.getElementById('auth-password').value;
 
-            if (isLoginMode) {
-                // 로그인 시도
-                const { data, error } = await client.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                if (error) {
-                    alert("로그인 실패: " + error.message);
-                } else {
-                    // alert("로그인 성공! 환영합니다.");
-                    closeAuthModal();
-                    checkUserStatus(); // UI 갱신
-                    
-                    // wallet.js가 있다면 지갑 정보도 새로고침
-                    if (typeof loadWallet === 'function') loadWallet();
-                }
+    if (!inputId || !password) return alert("아이디와 비밀번호를 입력해주세요.");
+
+    // 혹시 유저가 이메일 형식을 다 썼다면 @앞부분만 가져오기
+    if (inputId.includes('@')) {
+        inputId = inputId.split('@')[0];
+    }
+
+    // 내부 인증용 이메일로 변환
+    const authEmail = `${inputId}@example.com`;
+
+    if (isLoginMode) {
+        // 로그인 시도
+        const { data, error } = await client.auth.signInWithPassword({
+            email: authEmail,
+            password: password
+        });
+        if (error) {
+            // 에러 메시지 한글화
+            if(error.message.includes("Invalid login credentials")) {
+                alert("로그인 실패: 아이디나 비밀번호가 틀렸습니다.");
             } else {
-                // 회원가입 시도
-                const { data, error } = await client.auth.signUp({
-                    email: email,
-                    password: password
+                alert("로그인 오류: " + error.message);
+            }
+        } else {
+            closeAuthModal();
+            checkUserStatus();
+            if (typeof loadWallet === 'function') loadWallet();
+        }
+    } else {
+        // 메인화면에서의 회원가입 시도 (mail.html과 동일한 로직 적용)
+        const { data, error } = await client.auth.signUp({
+            email: authEmail,
+            password: password
+        });
+        if (error) {
+            alert("가입 실패: " + error.message);
+        } else {
+            // 프로필 생성
+            if (data.user) {
+                await client.from('profiles').upsert({ 
+                    id: data.user.id, 
+                    username: inputId, 
+                    nickname: inputId, 
+                    money: 100000, 
+                    token: 0 
                 });
-                if (error) {
-                    alert("가입 실패: " + error.message);
-                } else {
-                    alert("회원가입 성공! 자동 로그인됩니다.");
-                    closeAuthModal();
-                    checkUserStatus();
-                    
-                    // Supabase 트리거가 없다면 여기서 초기 프로필을 생성해줄 수도 있음 (선택사항)
-                    // 보통은 wallet.js의 loadWallet()이 실행되면서 없으면 생성함.
-                    if (typeof loadWallet === 'function') loadWallet();
-                }
+                alert("회원가입 성공! 자동 로그인됩니다.");
+                closeAuthModal();
+                checkUserStatus();
+                if (typeof loadWallet === 'function') loadWallet();
             }
         }
+    }
+}
 
         // 6. 로그아웃 처리
         async function handleLogout() {
