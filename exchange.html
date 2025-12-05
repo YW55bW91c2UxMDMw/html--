@@ -2,231 +2,456 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>JINDOSTAR - Token Exchange</title>
+    <title>JINDOSTAR DEX - Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <style>
-        /* 🌌 Deep Space Theme (Exchange) */
+        /* 🌌 Pro Trading Theme */
         :root {
-            --bg-deep: #050510;
+            --bg-deep: #0b0e11;
+            --bg-panel: #151a21; /* 패널 배경색 */
             --accent: #00d4ff;
-            --up-color: #00ff9d;
-            --down-color: #ff4f6d;
-            --glass-bg: rgba(20, 20, 35, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-sub: #a4a4c5;
+            --up-color: #00ff9d;   /* 매수/상승 초록 */
+            --down-color: #ff4f6d; /* 매도/하락 빨강 */
+            --text-main: #eaecef;
+            --text-sub: #848e9c;
+            --border: #2b3139;
         }
 
         * { box-sizing: border-box; }
+        
         body {
-            margin: 0; padding: 0; font-family: 'Pretendard', monospace;
+            margin: 0; padding: 0; font-family: 'Pretendard', sans-serif;
             background-color: var(--bg-deep); color: var(--text-main);
-            background-image: radial-gradient(circle at 50% 50%, #111130 0%, #050510 100%);
+            height: 100vh; overflow: hidden; /* 스크롤 없애고 앱처럼 */
+            display: flex; flex-direction: column;
         }
 
-        /* 레이아웃 */
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: 100vh; }
+        /* 1. 상단 헤더 */
+        header {
+            height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+        }
+        .logo { font-weight: 900; color: var(--accent); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .market-summary { display: flex; gap: 20px; font-size: 0.9rem; }
+        .summary-item span { display: block; font-size: 0.75rem; color: var(--text-sub); }
+        .summary-item strong { color: var(--text-main); }
+        .price-up { color: var(--up-color); }
+        .price-down { color: var(--down-color); }
+
+        /* 2. 메인 레이아웃 (3단 분할) */
+        .main-layout {
+            display: grid; grid-template-columns: 1fr 300px 320px; /* 차트 | 호가창 | 주문창 */
+            flex: 1; overflow: hidden;
+        }
+
+        /* 공통 패널 스타일 */
+        .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .panel:last-child { border-right: none; }
         
-        /* 상단 헤더 */
-        header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
-        .price-display { font-size: 2rem; font-weight: bold; color: var(--up-color); display: flex; align-items: center; gap: 10px; }
-        .price-change { font-size: 1rem; padding: 5px 10px; background: rgba(0, 255, 157, 0.1); border-radius: 5px; }
+        /* A. 차트 영역 */
+        .chart-section { display: flex; flex-direction: column; height: 100%; position: relative; }
+        .chart-header { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: bold; }
+        #real-chart { flex: 1; width: 100%; }
 
-        /* 차트 영역 */
-        .chart-card {
-            background: var(--glass-bg); border: 1px solid var(--border); border-radius: 12px;
-            padding: 20px; height: 600px; position: relative;
+        /* 하단: 내 거래 내역 */
+        .history-section {
+            height: 30%; border-top: 1px solid var(--border); background: var(--bg-deep);
+            display: flex; flex-direction: column;
         }
+        .history-header { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: bold; color: var(--text-sub); }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .history-table th { text-align: left; padding: 8px 15px; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; background: var(--bg-deep); }
+        .history-table td { padding: 5px 15px; border-bottom: 1px solid #1e2329; }
+        .history-content { overflow-y: auto; flex: 1; }
 
-        /* 사이드바 (정보 & 거래) */
-        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        /* B. 호가창 (Order Book) */
+        .orderbook-section { background: var(--bg-panel); overflow: hidden; display: flex; flex-direction: column; }
+        .ob-header { padding: 10px 15px; color: var(--text-sub); font-size: 0.8rem; display: flex; justify-content: space-between; }
+        .ob-list { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .ob-row {
+            display: flex; justify-content: space-between; padding: 2px 15px; font-size: 0.85rem; cursor: pointer; position: relative;
+        }
+        .ob-row:hover { background: #2a2e39; }
+        .ob-price { font-weight: bold; }
+        .ob-amount { color: var(--text-main); }
         
-        .info-card {
-            background: var(--glass-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
-        }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9rem; }
-        .info-label { color: var(--text-sub); }
-        .info-val { font-weight: bold; }
-
-        /* 거래 창 */
-        .trade-box {
-            background: #151525; border: 1px solid var(--accent); border-radius: 12px; padding: 20px; flex: 1;
-        }
-        .trade-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
-        .tab.buy { background: var(--up-color); color: black; }
-        .tab.sell { background: #333; color: #888; } /* 비활성 상태 */
-
-        input { width: 100%; padding: 15px; background: #000; border: 1px solid #444; color: white; margin-bottom: 15px; border-radius: 8px; font-size: 1.1rem; }
-        .btn-trade { width: 100%; padding: 15px; background: var(--up-color); border: none; font-weight: bold; font-size: 1.2rem; cursor: pointer; border-radius: 8px; }
+        /* 호가 막대 그래프 효과 */
+        .ob-bg { position: absolute; top: 0; right: 0; height: 100%; opacity: 0.15; z-index: 0; }
+        .sell-bg { background: var(--down-color); }
+        .buy-bg { background: var(--up-color); }
         
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; height: auto; }
+        .current-price-box {
+            padding: 10px 0; text-align: center; font-size: 1.5rem; font-weight: bold;
+            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* C. 주문창 (Trading) */
+        .trade-section { background: var(--bg-panel); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .trade-tabs { display: flex; background: #0b0e11; padding: 2px; border-radius: 4px; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-size: 0.9rem; color: var(--text-sub); border-radius: 4px; transition: 0.2s; }
+        .tab.active-buy { background: var(--up-color); color: #000; font-weight: bold; }
+        .tab.active-sell { background: var(--down-color); color: #fff; font-weight: bold; }
+
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-label { display: block; color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
+        .trade-input {
+            width: 100%; background: #2a2e39; border: 1px solid var(--border); color: white;
+            padding: 12px; border-radius: 4px; font-size: 1rem; text-align: right; outline: none;
+        }
+        .trade-input:focus { border-color: var(--accent); }
+        .unit { position: absolute; right: 12px; top: 38px; color: var(--text-sub); font-size: 0.8rem; }
+
+        .balance-info { display: flex; justify-content: space-between; color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
+        
+        .btn-order {
+            width: 100%; padding: 15px; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-buy { background: var(--up-color); color: #000; }
+        .btn-sell { background: var(--down-color); color: #fff; }
+        .btn-order:hover { opacity: 0.9; }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .main-layout { grid-template-columns: 1fr; overflow-y: auto; }
+            .panel { height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            .chart-section { height: 400px; }
+            .orderbook-section { height: 400px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <div>
-                <div class="logo">JINDOSTAR EXCHANGE</div>
-                <div style="font-size:0.8rem; color:var(--text-sub);">JDS / KRW • INDEX</div>
-            </div>
-            <div class="price-display">
-                <span id="current-price">1,250</span>
-                <span class="price-change">+5.2%</span>
-            </div>
-            <a href="/" style="color:var(--text-sub); text-decoration:none;">나가기 →</a>
-        </header>
-
-        <div class="chart-card">
-            <div id="price-chart" style="height: 100%;"></div>
+    <header>
+        <div class="logo">
+            🦊 JINDOSTAR DEX <span style="font-size:0.7rem; color:var(--text-sub); border:1px solid #444; padding:2px 5px; border-radius:4px;">PRO</span>
         </div>
-
-        <div class="sidebar">
-            <div class="info-card">
-                <h3 style="margin-top:0; color:var(--accent);">MARKET STATS</h3>
-                <div class="info-row">
-                    <span class="info-label">시가총액 (Market Cap)</span>
-                    <span class="info-val" id="market-cap">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">총 발행량 (Total Supply)</span>
-                    <span class="info-val" id="total-supply">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">유통량 (Circulating)</span>
-                    <span class="info-val" id="circulating">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">24h 거래량</span>
-                    <span class="info-val">342,102 JDS</span>
-                </div>
+        <div class="market-summary">
+            <div class="summary-item">
+                <span>현재가 (Last Price)</span>
+                <strong id="header-price" class="price-up">Loading...</strong>
             </div>
+            <div class="summary-item">
+                <span>총 발행량 (Total Supply)</span>
+                <strong id="header-supply">-</strong>
+            </div>
+            <div class="summary-item">
+                <span>시가총액 (Market Cap)</span>
+                <strong id="header-cap">-</strong>
+            </div>
+        </div>
+        <a href="/" style="color:var(--text-sub); text-decoration:none; font-size:0.9rem;">나가기 ↩</a>
+    </header>
 
-            <div class="trade-box">
-                <div class="trade-tabs">
-                    <div class="tab buy">매수 (Buy)</div>
-                    <div class="tab sell" style="background:#222;">매도 (Sell)</div>
-                </div>
-                
-                <div style="margin-bottom:10px; font-size:0.9rem; color:var(--text-sub);">
-                    보유 현금: <span style="color:white;" id="my-cash">0</span> KRW
-                </div>
-                <input type="number" placeholder="주문 수량 (Token)">
-                
-                <div style="margin-bottom:20px; font-size:0.9rem; color:var(--text-sub);">
-                    예상 지출: <span style="color:var(--accent);">0</span> KRW
-                </div>
-                
-                <button class="btn-trade">매수 체결</button>
-                <div style="text-align:center; margin-top:15px; font-size:0.8rem; color:#666;">
-                    * 현재 모의 거래만 지원됩니다.
+    <div class="main-layout">
+        
+        <div class="panel">
+            <div class="chart-section">
+                <div class="chart-header">JDS / KRW 차트</div>
+                <div id="real-chart"></div>
+            </div>
+            
+            <div class="history-section">
+                <div class="history-header">내 거래 내역 (My Orders)</div>
+                <div class="history-content">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>종류</th>
+                                <th>가격 (KRW)</th>
+                                <th>수량 (JDS)</th>
+                                <th>총액 (KRW)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="my-history-list">
+                            </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
+        <div class="panel orderbook-section">
+            <div class="ob-header">
+                <span>가격 (KRW)</span>
+                <span>수량 (JDS)</span>
+            </div>
+            <div class="ob-list" id="ob-asks" style="justify-content: flex-end; padding-bottom: 5px;"></div>
+            
+            <div class="current-price-box" id="ob-center-price">1,250</div>
+            
+            <div class="ob-list" id="ob-bids" style="padding-top: 5px;"></div>
+        </div>
+
+        <div class="panel trade-section">
+            <div class="trade-tabs">
+                <div class="tab active-buy" id="tab-buy" onclick="setMode('BUY')">매수</div>
+                <div class="tab" id="tab-sell" onclick="setMode('SELL')">매도</div>
+            </div>
+
+            <div class="input-group">
+                <div class="balance-info">
+                    <span>가능 금액</span>
+                    <span id="wallet-balance">0 KRW</span>
+                </div>
+                <label class="input-label">가격 (Price)</label>
+                <input type="text" class="trade-input" id="input-price" readonly value="시장가 (Market)">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">수량 (Amount)</label>
+                <input type="number" class="trade-input" id="input-amount" placeholder="0">
+                <span class="unit">JDS</span>
+            </div>
+
+            <div style="margin-top:auto;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem;">
+                    <span style="color:var(--text-sub)">예상 체결액</span>
+                    <strong style="color:white;"><span id="est-total">0</span> KRW</strong>
+                </div>
+                <button class="btn-order btn-buy" id="btn-submit" onclick="executeTrade()">매수 (Buy)</button>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // ★ Supabase 설정 (본인 것 필수)
+        // ★ Supabase 설정
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 1. 차트 데이터 생성 (더미 데이터)
-        function generateData(count, yrange) {
-            let i = 0;
-            let series = [];
-            while (i < count) {
-                let x = 0; // 타임스탬프는 아래에서 처리
-                let y = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min;
-                // 캔들 생성: Open, High, Low, Close
-                let open = y;
-                let close = y + Math.floor(Math.random() * 20 - 10);
-                let high = Math.max(open, close) + Math.floor(Math.random() * 10);
-                let low = Math.min(open, close) - Math.floor(Math.random() * 10);
-                
-                series.push({
-                    x: new Date().getTime() - (count - i) * 60000 * 60, // 1시간 단위
-                    y: [open, high, low, close]
-                });
-                i++;
-            }
-            return series;
+        let currentMode = 'BUY';
+        let currentPrice = 1000;
+        let myProfile = { money: 0, token: 0 };
+        let chart;
+
+        // 1. 차트 초기화
+        function initChart() {
+            const options = {
+                series: [{ name: 'Price', data: [] }],
+                chart: {
+                    type: 'area', height: '100%', background: 'transparent',
+                    animations: { enabled: false }, toolbar: { show: false }
+                },
+                stroke: { curve: 'straight', width: 2, colors: ['#00d4ff'] },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
+                dataLabels: { enabled: false },
+                xaxis: { 
+                    type: 'datetime', 
+                    labels: { style: { colors: '#848e9c' }, datetimeFormatter: { hour: 'HH:mm' } },
+                    axisBorder: { show: false }, axisTicks: { show: false }
+                },
+                yaxis: { 
+                    opposite: true, 
+                    labels: { style: { colors: '#848e9c' }, formatter: (val) => Math.floor(val) } 
+                },
+                grid: { borderColor: '#2b3139', strokeDashArray: 4 },
+                theme: { mode: 'dark' },
+                tooltip: { theme: 'dark', x: { format: 'dd MMM HH:mm' } }
+            };
+            chart = new ApexCharts(document.querySelector("#real-chart"), options);
+            chart.render();
         }
 
-        // 2. 차트 렌더링 (ApexCharts)
-        const options = {
-            series: [{
-                data: generateData(50, { min: 1100, max: 1300 })
-            }],
-            chart: {
-                type: 'candlestick',
-                height: '100%',
-                background: 'transparent',
-                toolbar: { show: false }
-            },
-            title: {
-                text: 'JDS/KRW Market',
-                align: 'left',
-                style: { color: '#fff' }
-            },
-            xaxis: {
-                type: 'datetime',
-                labels: { style: { colors: '#8899ac' } }
-            },
-            yaxis: {
-                tooltip: { enabled: true },
-                labels: { style: { colors: '#8899ac' } }
-            },
-            grid: {
-                borderColor: '#333'
-            },
-            theme: { mode: 'dark' },
-            plotOptions: {
-                candlestick: {
-                    colors: {
-                        upward: '#00ff9d',
-                        downward: '#ff4f6d'
-                    }
+        // 2. 전체 데이터 로드
+        async function loadData() {
+            // (1) 시장 통계 (가격, 발행량)
+            const { data: stats } = await client.rpc('get_market_stats');
+            if (stats) {
+                currentPrice = stats.market_price || 1000;
+                updateHeader(stats);
+                renderOrderBook(currentPrice); // 가상 호가창 생성
+            }
+
+            // (2) 차트 데이터
+            const { data: logs } = await client.from('trade_logs')
+                .select('created_at, price_per_token')
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            if (logs) {
+                const chartData = logs.map(log => ({
+                    x: new Date(log.created_at).getTime(),
+                    y: log.price_per_token
+                }));
+                // 데이터가 너무 적으면 앞부분에 더미 데이터 추가 (그래프 모양 잡기용)
+                if(chartData.length < 2) {
+                    chartData.unshift({ x: new Date().getTime() - 1000000, y: 1000 });
                 }
-            }
-        };
-
-        const chart = new ApexCharts(document.querySelector("#price-chart"), options);
-        chart.render();
-
-        // 3. 시장 데이터 불러오기 (Supabase)
-        async function loadMarketStats() {
-            // DB 함수 호출
-            const { data, error } = await client.rpc('get_market_stats');
-            
-            if (data) {
-                const supply = data.total_tokens;
-                const price = 1250; // 고정 또는 변동
-                const marketCap = supply * price;
-
-                // 숫자 포맷팅
-                document.getElementById('total-supply').innerText = supply.toLocaleString() + ' JDS';
-                document.getElementById('circulating').innerText = (supply * 0.85).toLocaleString() + ' JDS'; // 85% 유통 가정
-                document.getElementById('market-cap').innerText = (marketCap / 100000000).toFixed(1) + ' 억원';
+                chart.updateSeries([{ data: chartData }]);
             }
 
-            // 내 지갑 정보
+            // (3) 내 자산 및 거래내역
             const { data: { user } } = await client.auth.getUser();
             if(user) {
-                const { data: profile } = await client.from('profiles').select('money').eq('id', user.id).single();
-                if(profile) document.getElementById('my-cash').innerText = profile.money.toLocaleString();
+                const { data: profile } = await client.from('profiles').select('*').eq('id', user.id).single();
+                if(profile) {
+                    myProfile = profile;
+                    updateWalletUI();
+                }
+                loadMyHistory(user.id);
             }
         }
 
-        loadMarketStats();
+        // 3. UI 업데이트: 헤더 정보
+        function updateHeader(stats) {
+            document.getElementById('header-price').innerText = Math.round(stats.market_price).toLocaleString();
+            document.getElementById('header-supply').innerText = Math.round(stats.total_tokens).toLocaleString() + ' JDS';
+            const cap = (stats.total_tokens * stats.market_price) / 100000000; // 억 단위
+            document.getElementById('header-cap').innerText = cap.toFixed(2) + ' 억원';
+            
+            document.getElementById('ob-center-price').innerText = Math.round(stats.market_price).toLocaleString();
+            
+            // 색상 변경
+            const el = document.getElementById('header-price');
+            el.className = stats.market_price >= 1000 ? 'price-up' : 'price-down';
+        }
+
+        // 4. 가상 호가창 생성 (핵심 시각효과)
+        function renderOrderBook(price) {
+            const asksEl = document.getElementById('ob-asks');
+            const bidsEl = document.getElementById('ob-bids');
+            asksEl.innerHTML = '';
+            bidsEl.innerHTML = '';
+
+            const center = Math.round(price);
+            const gap = Math.max(1, Math.round(price * 0.005)); // 0.5% 간격
+
+            // 매도 호가 (위쪽, 가격 높은 순 -> 낮은 순)
+            for(let i=8; i>=1; i--) {
+                const p = center + (i * gap);
+                const amt = Math.floor(Math.random() * 500) + 10;
+                const width = Math.min(100, amt / 5); 
+                asksEl.innerHTML += `
+                    <div class="ob-row">
+                        <div class="ob-bg sell-bg" style="width:${width}%"></div>
+                        <span class="ob-price" style="color:var(--down-color)">${p.toLocaleString()}</span>
+                        <span class="ob-amount">${amt}</span>
+                    </div>`;
+            }
+
+            // 매수 호가 (아래쪽, 가격 낮은 순)
+            for(let i=1; i<=8; i++) {
+                const p = center - (i * gap);
+                const amt = Math.floor(Math.random() * 500) + 10;
+                const width = Math.min(100, amt / 5);
+                bidsEl.innerHTML += `
+                    <div class="ob-row">
+                        <div class="ob-bg buy-bg" style="width:${width}%"></div>
+                        <span class="ob-price" style="color:var(--up-color)">${p.toLocaleString()}</span>
+                        <span class="ob-amount">${amt}</span>
+                    </div>`;
+            }
+        }
+
+        // 5. 내 거래 내역 불러오기
+        async function loadMyHistory(userId) {
+            const { data: logs } = await client.from('trade_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const list = document.getElementById('my-history-list');
+            list.innerHTML = '';
+
+            if(logs) {
+                logs.forEach(log => {
+                    const date = new Date(log.created_at);
+                    const timeStr = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+                    const typeColor = log.type === 'BUY' ? 'var(--up-color)' : 'var(--down-color)';
+                    
+                    list.innerHTML += `
+                        <tr>
+                            <td>${timeStr}</td>
+                            <td style="color:${typeColor}; font-weight:bold;">${log.type === 'BUY' ? '매수' : '매도'}</td>
+                            <td>${Math.round(log.price_per_token).toLocaleString()}</td>
+                            <td>${log.token_amount.toLocaleString()}</td>
+                            <td>${log.total_krw.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // 6. 주문창 로직
+        function setMode(mode) {
+            currentMode = mode;
+            const btn = document.getElementById('btn-submit');
+            
+            document.getElementById('tab-buy').className = mode === 'BUY' ? 'tab active-buy' : 'tab';
+            document.getElementById('tab-sell').className = mode === 'SELL' ? 'tab active-sell' : 'tab';
+            
+            btn.className = mode === 'BUY' ? 'btn-order btn-buy' : 'btn-order btn-sell';
+            btn.innerText = mode === 'BUY' ? '매수 (Buy)' : '매도 (Sell)';
+            
+            updateWalletUI();
+        }
+
+        function updateWalletUI() {
+            const balEl = document.getElementById('wallet-balance');
+            if(currentMode === 'BUY') {
+                balEl.innerText = `${myProfile.money.toLocaleString()} KRW`;
+            } else {
+                balEl.innerText = `${myProfile.token.toLocaleString()} JDS`;
+            }
+            calculateTotal();
+        }
+
+        document.getElementById('input-amount').addEventListener('input', calculateTotal);
+
+        function calculateTotal() {
+            const amt = document.getElementById('input-amount').value;
+            const total = amt * currentPrice;
+            document.getElementById('est-total').innerText = Math.round(total).toLocaleString();
+        }
+
+        // 7. 거래 실행
+        async function executeTrade() {
+            const amount = parseInt(document.getElementById('input-amount').value);
+            if (currentMode === 'BUY') {
+                alert("⛔ [매수 제한]\n현재 토큰은 'JINDO GALAXY'에서 채굴이나 환전을 통해서만 획득 가능합니다.\n(유동성 보호 정책)");
+                return;
+            }
+            if(!amount || amount <= 0) return alert("수량을 입력하세요.");
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true; btn.innerText = "체결 중...";
+
+            const { data, error } = await client.rpc('trade_token', {
+                trade_type: currentMode,
+                amount: amount
+            });
+
+            if(error) {
+                alert("주문 실패: " + error.message);
+            } else {
+                // 알림 대신 부드러운 업데이트
+                console.log("체결 완료", data);
+                document.getElementById('input-amount').value = '';
+                loadData(); // 데이터 갱신
+            }
+            btn.disabled = false;
+            setMode(currentMode); // 텍스트 복구
+        }
+
+        // 실시간 구독 (가격 변동 시 즉시 반영)
+        client.channel('public:trade_logs')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_logs' }, () => {
+                loadData();
+            })
+            .subscribe();
+
+        // 시작
+        initChart();
+        loadData();
+
     </script>
 </body>
 </html>

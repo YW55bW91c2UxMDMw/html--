@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JINDOSTAR - HALL OF FAME</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 🌌 Deep Space Theme */
+        :root {
+            --bg-deep: #050510;
+            --accent: #ffd700; /* 랭킹은 골드 컬러 */
+            --glass-bg: rgba(20, 20, 35, 0.8);
+            --border: rgba(255, 215, 0, 0.3);
+            --text-main: #ffffff;
+        }
+        body {
+            margin: 0; padding: 20px; font-family: 'Pretendard';
+            background-color: var(--bg-deep); color: var(--text-main);
+            background-image: url('https://images.unsplash.com/photo-1533240332313-0db49b459ad6?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover; background-attachment: fixed;
+            min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 40px; padding-top: 40px; }
+        .header h1 { font-size: 3rem; color: var(--accent); text-shadow: 0 0 30px var(--accent); margin: 0; }
+        .header p { color: #aaa; margin-top: 10px; }
+
+        .rank-card {
+            background: var(--glass-bg); border: 1px solid var(--border);
+            border-radius: 15px; overflow: hidden; backdrop-filter: blur(10px);
+        }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255, 215, 0, 0.1); padding: 15px; color: var(--accent); text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.1rem; }
+        
+        .rank-num { font-weight: 900; font-size: 1.2rem; width: 50px; text-align: center; }
+        .rank-1 { color: #ffd700; font-size: 1.5rem; } /* 1등 금 */
+        .rank-2 { color: #c0c0c0; font-size: 1.4rem; } /* 2등 은 */
+        .rank-3 { color: #cd7f32; font-size: 1.3rem; } /* 3등 동 */
+        
+        .user-info { font-weight: bold; }
+        .wealth { text-align: right; font-family: monospace; color: #00ff9d; }
+        .planet-badge { background: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; margin-left: 10px; border: 1px solid #555; }
+
+        .back-btn { display: block; width: 100%; text-align: center; padding: 20px; color: #aaa; text-decoration: none; margin-top: 20px; }
+        .back-btn:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>HALL OF FAME</h1>
+            <p>우주에서 가장 영향력 있는 정복자들</p>
+        </div>
+
+        <div class="rank-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:center;">#</th>
+                        <th>닉네임 (Codename)</th>
+                        <th style="text-align:right;">총 자산 가치 (Est. Value)</th>
+                    </tr>
+                </thead>
+                <tbody id="rank-list">
+                    <tr><td colspan="3" style="text-align:center; padding:30px;">데이터 불러오는 중...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/" class="back-btn">← 메인으로 돌아가기</a>
+    </div>
+
+    <script>
+        // ★ Supabase 설정 (본인 키로 교체!)
+        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
+        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function loadRanking() {
+            const { data, error } = await client.rpc('get_ranking');
+            const list = document.getElementById('rank-list');
+            list.innerHTML = '';
+
+            if (error) {
+                list.innerHTML = `<tr><td colspan="3" style="text-align:center;">오류: ${error.message}</td></tr>`;
+                return;
+            }
+
+            data.forEach((user, index) => {
+                const rank = index + 1;
+                let rankClass = 'rank-num';
+                if(rank === 1) rankClass += ' rank-1';
+                if(rank === 2) rankClass += ' rank-2';
+                if(rank === 3) rankClass += ' rank-3';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="${rankClass}">${rank}</td>
+                    <td>
+                        <span class="user-info">${user.nickname}</span>
+                        ${user.planet_count > 0 ? `<span class="planet-badge">🪐 ${user.planet_count}개 행성</span>` : ''}
+                    </td>
+                    <td class="wealth">₩ ${user.total_value.toLocaleString()}</td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        loadRanking();
+    </script>
+</body>
+</html>

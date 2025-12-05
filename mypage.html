@@ -19,6 +19,7 @@
             --text-sub: #a4a4c5;
             --win-color: #00ff9d;
             --lose-color: #ff4f6d;
+            --dust-color: #bf00ff; /* 스타더스트 색상 */
         }
 
         * { box-sizing: border-box; }
@@ -28,6 +29,7 @@
             font-family: 'Pretendard', sans-serif;
             background-color: var(--bg-deep);
             color: var(--text-main);
+            /* 우주 배경 효과 */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
@@ -102,17 +104,17 @@
         .asset-value { font-size: 1.5rem; font-weight: bold; }
         .money { color: var(--win-color); text-shadow: 0 0 10px rgba(0, 255, 157, 0.3); }
         .token { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .dust { color: var(--dust-color); text-shadow: 0 0 10px rgba(191, 0, 255, 0.3); }
 
         /* 버튼 스타일 */
         .btn {
             padding: 10px 15px; font-size: 0.9rem; font-weight: bold;
             background: linear-gradient(135deg, var(--accent), #006eff);
             color: #000; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s;
-            text-align: center; width: 100%; margin-top: auto;
+            text-align: center; width: 100%; margin-top: auto; text-decoration: none; display: block;
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px var(--accent-glow); color: white; }
-        .btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
-
+        
         .btn-outline {
             background: transparent; border: 1px solid var(--glass-border); color: var(--text-sub);
         }
@@ -182,21 +184,22 @@
                 </div>
                 <div class="asset-row">
                     <span style="color:var(--text-sub);">보유 토큰</span>
-                    <span class="asset-value token"><span id="my-token">0</span> 🪙</span>
+                    <span class="asset-value token"><span id="my-token">0</span> JDS</span>
                 </div>
-                <button class="btn btn-outline" onclick="location.href='game.html'">게임하러 가기</button>
+                <div class="asset-row">
+                    <span style="color:var(--text-sub);">스타더스트</span>
+                    <span class="asset-value dust"><span id="my-stardust">0</span> Dust</span>
+                </div>
+                <button class="btn btn-outline" onclick="location.href='exchange.html'">📈 거래소 가기</button>
             </div>
 
             <div class="card">
-                <h2>DAILY MINING ⛏️</h2>
+                <h2>GALAXY MINING ⛏️</h2>
                 <div style="text-align:center; padding:10px;">
                     <p style="color:var(--text-sub); margin-bottom:20px;">
-                        행성에서 자원을 채굴하여<br>무료 토큰을 획득하세요! (1일 1회)
+                        우주 광산에서 광물을 채굴하고<br>토큰으로 교환하세요.
                     </p>
-                    <button id="mining-btn" class="btn" onclick="doMining()">🚀 채굴 시작 (Click)</button>
-                    <p id="mining-timer" style="color:var(--lose-color); font-size:0.8rem; margin-top:10px; display:none;">
-                        이미 채굴했습니다. 내일 다시 오세요.
-                    </p>
+                    <a href="mining.html" class="btn">🚀 광산으로 이동</a>
                 </div>
             </div>
             
@@ -241,9 +244,7 @@
     </div>
 
     <script>
-        // =================================================
-        // [필수] Supabase 연결 키 (index.html과 동일하게 맞춤)
-        // =================================================
+        // ★ Supabase 키 설정 (반드시 본인 것으로 유지!)
         const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4';
         
@@ -251,27 +252,24 @@
 
         // 페이지 로드 시
         window.onload = async () => {
-            // 1. 현재 로그인된 사용자 확인
             const { data: { user } } = await supabase.auth.getUser();
-            
-            // 로그인이 안 되어있으면 메인으로 쫓아냄
             if (!user) {
-                alert("로그인이 필요합니다. 메인 페이지에서 로그인해주세요.");
+                alert("로그인이 필요합니다.");
                 location.href = 'index.html';
                 return;
             }
 
-            // 2. 화면에 기본 정보 표시 (이메일 등)
+            // 기본 정보 표시
             document.getElementById('display-email').innerText = user.email;
             document.getElementById('display-uid').innerText = user.id.slice(0, 8) + "...";
 
-            // 3. DB에서 상세 정보 불러오기
             loadProfile(user.id);
             loadHistory(user.id);
         };
 
         // 프로필 정보 불러오기
         async function loadProfile(userId) {
+            // stardust 컬럼까지 불러오도록 쿼리 확인
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -281,67 +279,18 @@
             if (data) {
                 document.getElementById('my-money').innerText = data.money.toLocaleString();
                 document.getElementById('my-token').innerText = data.token.toLocaleString();
+                // 새로 추가된 Stardust 표시 (없으면 0)
+                document.getElementById('my-stardust').innerText = (data.stardust || 0).toLocaleString();
+                
                 document.getElementById('display-nick').innerText = data.nickname || '이름 없는 탐사대원';
                 
-                // Jindo Mail 주소가 있으면 표시
+                // Jindo Mail 주소 표시
                 if (data.username) {
                     document.getElementById('display-mail-addr').innerText = data.username + "@jindostar.net";
                     document.getElementById('mail-addr-box').style.display = 'block';
                 }
-
-                // 채굴 가능 여부 확인
-                checkMiningStatus(data.last_mined_at);
             } else {
-                console.log("프로필 데이터가 없습니다. (초기화 필요)");
-                // 만약 프로필이 없으면 wallet.js나 index.html의 로직에서 생성되어야 함
-            }
-        }
-
-        // 채굴 상태 확인 (24시간 체크)
-        function checkMiningStatus(lastMined) {
-            const btn = document.getElementById('mining-btn');
-            const timer = document.getElementById('mining-timer');
-            
-            if (!lastMined) return; // 채굴한 적 없으면 버튼 활성화 유지
-
-            const lastDate = new Date(lastMined);
-            const now = new Date();
-            const diff = now - lastDate; // 밀리초 차이
-            const oneDay = 24 * 60 * 60 * 1000;
-
-            if (diff < oneDay) {
-                // 아직 하루 안 지남
-                btn.disabled = true;
-                btn.innerText = "⏳ 충전 중...";
-                timer.style.display = 'block';
-                
-                // 남은 시간 계산
-                const remain = new Date(lastDate.getTime() + oneDay) - now;
-                const hours = Math.floor(remain / (1000 * 60 * 60));
-                timer.innerText = `${hours}시간 뒤에 다시 채굴 가능합니다.`;
-            }
-        }
-
-        // [기능 1] 일일 채굴 실행
-        async function doMining() {
-            const btn = document.getElementById('mining-btn');
-            btn.disabled = true;
-            btn.innerText = "⛏️ 채굴 중...";
-
-            // DB 함수 호출 (Supabase SQL 함수 필요)
-            const { data, error } = await supabase.rpc('daily_mining');
-
-            if (error) {
-                // SQL 함수가 없으면 에러가 남
-                console.error(error);
-                alert("채굴 시스템 오류: DB 함수가 설정되지 않았습니다.");
-                btn.disabled = false;
-            } else if (data === -1) {
-                alert("오늘은 이미 채굴했습니다. 내일 다시 오세요!");
-                location.reload();
-            } else {
-                alert(`🎉 채굴 성공! +${data} 토큰을 획득했습니다.`);
-                location.reload(); // 새로고침해서 잔액 갱신
+                console.log("프로필 데이터 로드 실패", error);
             }
         }
 
