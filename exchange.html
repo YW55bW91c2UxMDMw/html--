@@ -9,121 +9,62 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <style>
-        /* 🌌 Pro Trading Theme */
-        :root {
-            --bg-deep: #0b0e11;
-            --bg-panel: #151a21; /* 패널 배경색 */
-            --accent: #00d4ff;
-            --up-color: #00ff9d;   /* 매수/상승 초록 */
-            --down-color: #ff4f6d; /* 매도/하락 빨강 */
-            --text-main: #eaecef;
-            --text-sub: #848e9c;
-            --border: #2b3139;
-        }
+    /* 모네로 테마 */
+    .xmr-box {
+        background: #1a1a1a; border: 1px solid #f26822; /* 모네로 오렌지 */
+        border-radius: 12px; padding: 20px; color: #fff; text-align: center;
+        margin-top: 20px;
+    }
+    .xmr-title { color: #f26822; font-weight: 900; font-size: 1.5rem; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .qr-area { background: white; padding: 10px; display: inline-block; border-radius: 8px; margin: 15px 0; }
+    .wallet-addr {
+        background: #333; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.8rem;
+        word-break: break-all; color: #aaa; border: 1px solid #444; margin-bottom: 15px; cursor: pointer;
+    }
+    .wallet-addr:hover { color: white; border-color: #f26822; }
+    .input-xmr { width: 100%; margin-bottom: 10px; background: #222; border: 1px solid #555; color: white; padding: 12px; border-radius: 5px; }
+    .btn-xmr { width: 100%; background: #f26822; color: black; font-weight: bold; padding: 12px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-xmr:hover { background: white; }
+</style>
 
-        * { box-sizing: border-box; }
-        
-        body {
-            margin: 0; padding: 0; font-family: 'Pretendard', sans-serif;
-            background-color: var(--bg-deep); color: var(--text-main);
-            height: 100vh; overflow: hidden; /* 스크롤 없애고 앱처럼 */
-            display: flex; flex-direction: column;
-        }
+<div class="xmr-box">
+    <div class="xmr-title">
+        <img src="https://cryptologos.cc/logos/monero-xmr-logo.png" width="30">
+        MONERO DEPOSIT
+    </div>
+    <p style="color:#888; font-size:0.9rem;">추적 불가능한 익명 자산 XMR로 충전하세요.</p>
+    
+    <div class="qr-area">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A" alt="QR">
+    </div>
 
-        /* 1. 상단 헤더 */
-        header {
-            height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-        }
-        .logo { font-weight: 900; color: var(--accent); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
-        .market-summary { display: flex; gap: 20px; font-size: 0.9rem; }
-        .summary-item span { display: block; font-size: 0.75rem; color: var(--text-sub); }
-        .summary-item strong { color: var(--text-main); }
-        .price-up { color: var(--up-color); }
-        .price-down { color: var(--down-color); }
+    <div class="wallet-addr" onclick="navigator.clipboard.writeText(this.innerText); alert('주소 복사됨!');">
+        44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A
+    </div>
 
-        /* 2. 메인 레이아웃 (3단 분할) */
-        .main-layout {
-            display: grid; grid-template-columns: 1fr 300px 320px; /* 차트 | 호가창 | 주문창 */
-            flex: 1; overflow: hidden;
-        }
+    <div style="text-align: left; margin-bottom: 5px; font-size: 0.9rem; color: #f26822;">
+        1 XMR ≈ <span id="xmr-price">Loading...</span> KRW
+    </div>
 
-        /* 공통 패널 스타일 */
-        .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .panel:last-child { border-right: none; }
-        
-        /* A. 차트 영역 */
-        .chart-section { display: flex; flex-direction: column; height: 100%; position: relative; }
-        .chart-header { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: bold; }
-        #real-chart { flex: 1; width: 100%; }
+    <input type="number" id="xmr-amount" class="input-xmr" placeholder="보낸 수량 (예: 0.5)">
+    <input type="text" id="xmr-txid" class="input-xmr" placeholder="TXID (트랜잭션 해시/키)">
+    
+    <button class="btn-xmr" onclick="requestDeposit()">입금 확인 요청</button>
+</div>
 
-        /* 하단: 내 거래 내역 */
-        .history-section {
-            height: 30%; border-top: 1px solid var(--border); background: var(--bg-deep);
-            display: flex; flex-direction: column;
-        }
-        .history-header { padding: 10px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: bold; color: var(--text-sub); }
-        .history-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .history-table th { text-align: left; padding: 8px 15px; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; background: var(--bg-deep); }
-        .history-table td { padding: 5px 15px; border-bottom: 1px solid #1e2329; }
-        .history-content { overflow-y: auto; flex: 1; }
+<script>
+    // 페이지 로드 시 시세 조회
+    window.addEventListener('load', async () => {
+        const price = await getXMRPrice(); // wallet.js에 있는 함수
+        document.getElementById('xmr-price').innerText = price.toLocaleString();
+    });
 
-        /* B. 호가창 (Order Book) */
-        .orderbook-section { background: var(--bg-panel); overflow: hidden; display: flex; flex-direction: column; }
-        .ob-header { padding: 10px 15px; color: var(--text-sub); font-size: 0.8rem; display: flex; justify-content: space-between; }
-        .ob-list { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-        .ob-row {
-            display: flex; justify-content: space-between; padding: 2px 15px; font-size: 0.85rem; cursor: pointer; position: relative;
-        }
-        .ob-row:hover { background: #2a2e39; }
-        .ob-price { font-weight: bold; }
-        .ob-amount { color: var(--text-main); }
-        
-        /* 호가 막대 그래프 효과 */
-        .ob-bg { position: absolute; top: 0; right: 0; height: 100%; opacity: 0.15; z-index: 0; }
-        .sell-bg { background: var(--down-color); }
-        .buy-bg { background: var(--up-color); }
-        
-        .current-price-box {
-            padding: 10px 0; text-align: center; font-size: 1.5rem; font-weight: bold;
-            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-            background: rgba(255,255,255,0.02);
-        }
-
-        /* C. 주문창 (Trading) */
-        .trade-section { background: var(--bg-panel); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        
-        .trade-tabs { display: flex; background: #0b0e11; padding: 2px; border-radius: 4px; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-size: 0.9rem; color: var(--text-sub); border-radius: 4px; transition: 0.2s; }
-        .tab.active-buy { background: var(--up-color); color: #000; font-weight: bold; }
-        .tab.active-sell { background: var(--down-color); color: #fff; font-weight: bold; }
-
-        .input-group { position: relative; margin-bottom: 15px; }
-        .input-label { display: block; color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
-        .trade-input {
-            width: 100%; background: #2a2e39; border: 1px solid var(--border); color: white;
-            padding: 12px; border-radius: 4px; font-size: 1rem; text-align: right; outline: none;
-        }
-        .trade-input:focus { border-color: var(--accent); }
-        .unit { position: absolute; right: 12px; top: 38px; color: var(--text-sub); font-size: 0.8rem; }
-
-        .balance-info { display: flex; justify-content: space-between; color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
-        
-        .btn-order {
-            width: 100%; padding: 15px; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s;
-        }
-        .btn-buy { background: var(--up-color); color: #000; }
-        .btn-sell { background: var(--down-color); color: #fff; }
-        .btn-order:hover { opacity: 0.9; }
-
-        /* 반응형 */
-        @media (max-width: 1024px) {
-            .main-layout { grid-template-columns: 1fr; overflow-y: auto; }
-            .panel { height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-            .chart-section { height: 400px; }
-            .orderbook-section { height: 400px; }
-        }
-    </style>
+    function requestDeposit() {
+        const amt = document.getElementById('xmr-amount').value;
+        const txid = document.getElementById('xmr-txid').value;
+        submitXMRDeposit(amt, txid); // wallet.js 함수 호출
+    }
+</script>
 </head>
 <body>
 

@@ -5,15 +5,14 @@
     <title>JINDOSTAR - Software Depot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-    <style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="wallet.js"></script> <style>
         /* 🌌 [JindoStar 해적 테마] */
         :root {
             --bg-deep: #050510;
-            --accent: #00d4ff;       /* 시안 (기본) */
+            --accent: #00d4ff;       
             --premium: #ff4f6d;      /* 유료 (VIP) */
-            --free: #00ff9d;         /* 무료 (Safe) */
+            --free: #00ff9d;         /* 무료 */
             --glass-bg: rgba(20, 20, 35, 0.8);
             --border: rgba(255, 255, 255, 0.1);
             --text-main: #eeeeee;
@@ -24,82 +23,36 @@
 
         body {
             margin: 0; padding: 0;
-            font-family: 'Pretendard', monospace; /* 해킹 느낌을 위해 고정폭 폰트 사용 */
-            background-color: var(--bg-deep);
-            color: var(--text-main);
+            font-family: 'Pretendard', monospace;
+            background-color: var(--bg-deep); color: var(--text-main);
             background-image: 
                 linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 255, 0, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px; /* 모눈종이 그리드 배경 */
+            background-size: 30px 30px;
             min-height: 100vh;
         }
 
-        a { text-decoration: none; color: inherit; }
-
-        /* 상단 네비게이션 */
         .top-bar {
-            padding: 15px 20px;
-            background: #000;
-            border-bottom: 1px solid #333;
+            padding: 15px 20px; background: #000; border-bottom: 1px solid #333;
             display: flex; justify-content: space-between; align-items: center;
             position: fixed; top: 0; width: 100%; z-index: 100;
         }
-        .logo { font-weight: 900; color: var(--accent); letter-spacing: 2px; }
+        .logo { font-weight: 900; color: var(--accent); letter-spacing: 2px; text-decoration: none; }
 
         .container { max-width: 1000px; margin: 80px auto 40px auto; padding: 0 15px; }
 
-        /* 검색창 & 필터 */
-        .search-box {
-            display: flex; gap: 10px; margin-bottom: 20px;
-            background: var(--glass-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border);
-        }
-        input {
-            flex: 1; background: #000; border: 1px solid #444; color: #fff; padding: 10px;
-            font-family: 'Pretendard', monospace; outline: none;
-        }
-        input:focus { border-color: var(--accent); }
-
-        /* 🏴‍☠️ 해적판 스타일 테이블 리스트 */
-        .torrent-table {
-            width: 100%; border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        
-        .torrent-table th {
-            text-align: left; padding: 10px;
-            background: rgba(255,255,255,0.05);
-            color: var(--text-sub); font-size: 0.8rem;
-            border-bottom: 2px solid #333;
-        }
-
-        .torrent-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #222;
-            vertical-align: middle;
-        }
-
+        .torrent-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .torrent-table th { text-align: left; padding: 10px; background: rgba(255,255,255,0.05); color: var(--text-sub); border-bottom: 2px solid #333; }
+        .torrent-table td { padding: 12px 10px; border-bottom: 1px solid #222; vertical-align: middle; }
         .torrent-table tr:hover { background: rgba(255,255,255,0.02); }
 
-        /* 타입 아이콘 */
-        .type-icon { font-size: 1.2rem; margin-right: 5px; }
+        .vip-tag { background: var(--premium); color: #000; font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 5px; }
+        .free-tag { background: var(--free); color: #000; font-weight: bold; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; margin-left: 5px; }
 
-        /* 제목 & 태그 */
-        .prog-title { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 3px; }
-        .prog-meta { font-size: 0.75rem; color: var(--text-sub); }
-        .vip-tag { 
-            background: var(--premium); color: #000; font-weight: bold; font-size: 0.7rem; 
-            padding: 2px 6px; border-radius: 3px; margin-left: 5px; 
-        }
-        .free-tag { 
-            background: var(--free); color: #000; font-weight: bold; font-size: 0.7rem; 
-            padding: 2px 6px; border-radius: 3px; margin-left: 5px; 
-        }
-
-        /* 마그넷/다운로드 버튼 */
+        /* 버튼 */
         .action-btn {
-            display: inline-block; padding: 5px 10px;
-            border: 1px solid #444; border-radius: 4px;
-            font-size: 0.8rem; cursor: pointer; transition: 0.3s;
+            display: inline-block; padding: 6px 12px; border: 1px solid #444; border-radius: 4px;
+            font-size: 0.8rem; cursor: pointer; transition: 0.3s; text-decoration: none;
         }
         .btn-down { color: var(--free); border-color: var(--free); }
         .btn-down:hover { background: var(--free); color: black; }
@@ -107,151 +60,125 @@
         .btn-buy { color: var(--premium); border-color: var(--premium); }
         .btn-buy:hover { background: var(--premium); color: black; }
 
-        /* 시더/리처 (컨셉용) */
-        .seed { color: var(--free); font-weight: bold; }
-        .leech { color: var(--premium); font-weight: bold; }
+        /* 복합 결제 버튼 (JDS + Dust) */
+        .btn-mix { color: #bf00ff; border-color: #bf00ff; }
+        .btn-mix:hover { background: #bf00ff; color: white; }
 
-        /* 모바일 대응 */
-        @media (max-width: 600px) {
-            .hide-mobile { display: none; }
-            .prog-title { font-size: 0.9rem; }
-        }
+        @media (max-width: 600px) { .hide-mobile { display: none; } }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
         <a href="/" class="logo">JINDO_WAREZ</a>
-        <div style="font-size:0.8rem; color:#666;">CONNECTED: <span style="color:var(--free);">SECURE</span></div>
+        <div style="font-size:0.8rem; color:#666;">
+            Wallet: <span id="my-wallet-info">Loading...</span>
+        </div>
     </div>
 
     <div class="container">
-        
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="Search programs, cracks, tools..." onkeyup="filterList()">
-            <select id="filter-select" onchange="filterList()" style="background:#000; color:#fff; border:1px solid #444; padding:5px;">
-                <option value="all">All Types</option>
-                <option value="free">Free Only</option>
-                <option value="premium">Premium Only</option>
-            </select>
-        </div>
-
+        <h2 style="margin-bottom:20px; color:var(--accent);">Software Repository</h2>
         <table class="torrent-table">
             <thead>
                 <tr>
-                    <th width="50%">Name / Type</th>
-                    <th width="10%" class="hide-mobile">Ver</th>
-                    <th width="10%" class="hide-mobile">Size</th>
-                    <th width="10%" class="hide-mobile">SE/LE</th>
-                    <th width="20%" style="text-align:right;">Action</th>
+                    <th width="50%">Name / Cost</th>
+                    <th width="15%" class="hide-mobile">Size</th>
+                    <th width="35%" style="text-align:right;">Action</th>
                 </tr>
             </thead>
             <tbody id="program-list">
-                <tr><td colspan="5" style="text-align:center; padding:30px; color:#555;">Searching Database...</td></tr>
+                <tr><td colspan="3" style="text-align:center; padding:30px;">Loading...</td></tr>
             </tbody>
         </table>
-
-        <div style="margin-top:30px; text-align:center; font-size:0.8rem; color:#444;">
-            WARNING: You are browsing a secure JindoStar mirror. <br>
-            IP Logging Disabled. P2P Encrypted May be?
-        </div>
     </div>
 
     <script>
-        // 1. Supabase 설정
-        const supabaseUrl = 'https://podegnqsxajvtegplsvo.supabase.co'
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZGVnbnFzeGFqdnRlZ3Bsc3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MzgyMjMsImV4cCI6MjA3OTExNDIyM30.uq9VhsOyJYDtarKIDAxGnoq_K1BHCOp4DFp57rUSEL4'
-        const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // Supabase는 wallet.js에서 window.client로 사용
+        let myWalletData = { token: 0, stardust: 0 };
 
-        let allPrograms = [];
+        window.addEventListener('load', async () => {
+            setTimeout(async () => {
+                if(!window.client) return;
+                await updateWalletDisplay();
+                loadPrograms();
+            }, 500);
+        });
 
-        // 2. 데이터 불러오기
-        async function loadPrograms() {
-            const { data, error } = await client
-                .from('programs')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error(error);
-                document.getElementById('program-list').innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
-                return;
+        async function updateWalletDisplay() {
+            const { data: { user } } = await window.client.auth.getUser();
+            if(user) {
+                const { data } = await window.client.from('profiles').select('token, stardust').eq('id', user.id).single();
+                if(data) {
+                    myWalletData = data;
+                    document.getElementById('my-wallet-info').innerText = `${data.token} T / ${data.stardust} D`;
+                }
             }
-
-            allPrograms = data;
-            renderList(data);
         }
 
-        // 3. 리스트 그리기
-        function renderList(data) {
+        async function loadPrograms() {
+            const { data } = await window.client.from('programs').select('*').order('created_at', { ascending: false });
             const list = document.getElementById('program-list');
             list.innerHTML = '';
 
-            data.forEach(item => {
-                // 유료/무료 구분
-                let badge = item.is_premium 
-                    ? `<span class="vip-tag">VIP Only ($${item.price})</span>` 
-                    : `<span class="free-tag">FreeLech</span>`;
-                
-                // 버튼 구분
-                let btn = item.is_premium
-                    ? `<a href="#" onclick="alert('💳 결제 시스템 연동 준비중입니다.\\n가격: ${item.price}원'); return false;" class="action-btn btn-buy">🛒 Buy</a>`
-                    : `<a href="${item.download_url}" class="action-btn btn-down" download>💾 Download</a>`;
-                
-                // 마그넷 (컨셉)
-                let magnet = item.magnet_link 
-                    ? `<a href="${item.magnet_link}" title="Magnet Link">🧲</a>` 
-                    : ``;
+            if(!data) return list.innerHTML = '<tr><td colspan="3">No Data</td></tr>';
 
-                // 가짜 시더/리처 생성 (랜덤)
-                let se = item.seeders || Math.floor(Math.random() * 500);
-                let le = Math.floor(Math.random() * 50);
+            data.forEach(item => {
+                let badge = '', btn = '';
+                
+                // 가격 정책 확인
+                const priceToken = item.price || 0;
+                const priceDust = item.price_dust || 0;
+
+                if (priceToken === 0 && priceDust === 0) {
+                    // 무료
+                    badge = `<span class="free-tag">Free</span>`;
+                    btn = `<a href="${item.download_url}" class="action-btn btn-down" download>💾 Download</a>`;
+                } else if (priceDust > 0) {
+                    // 복합 결제 (VIP)
+                    badge = `<span class="vip-tag" style="background:#bf00ff; color:white;">${priceToken}T + ${priceDust}D</span>`;
+                    btn = `<button class="action-btn btn-mix" onclick="purchase('${item.title}', ${priceToken}, ${priceDust}, '${item.download_url}')">🛒 Purchase</button>`;
+                } else {
+                    // 일반 유료
+                    badge = `<span class="vip-tag">${priceToken} Token</span>`;
+                    btn = `<button class="action-btn btn-buy" onclick="purchase('${item.title}', ${priceToken}, 0, '${item.download_url}')">🛒 Buy</button>`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
-                        <div style="display:flex; align-items:center;">
-                            <span class="type-icon">${item.is_premium ? '💎' : '📦'}</span>
-                            <div>
-                                <a href="#" class="prog-title">${item.title} ${badge}</a>
-                                <div class="prog-meta">Uploaded ${new Date(item.created_at).toLocaleDateString()} | by JindoStar</div>
-                            </div>
-                        </div>
+                        <div style="font-weight:bold;">${item.title} ${badge}</div>
+                        <div style="font-size:0.8rem; color:#666;">${item.description || 'No description'}</div>
                     </td>
-                    <td class="hide-mobile" style="color:var(--accent);">${item.version}</td>
-                    <td class="hide-mobile">${item.size}</td>
-                    <td class="hide-mobile"><span class="seed">${se}</span> / <span class="leech">${le}</span></td>
-                    <td style="text-align:right;">
-                        ${magnet}
-                        ${btn}
-                    </td>
+                    <td class="hide-mobile">${item.size || 'Unknown'}</td>
+                    <td style="text-align:right;">${btn}</td>
                 `;
                 list.appendChild(tr);
             });
         }
 
-        // 4. 검색 및 필터링
-        function filterList() {
-            const keyword = document.getElementById('search-input').value.toLowerCase();
-            const type = document.getElementById('filter-select').value;
+        // [핵심] 구매 함수
+        async function purchase(title, costToken, costDust, url) {
+            // 잔액 1차 확인 (클라이언트)
+            if (myWalletData.token < costToken) return alert("토큰이 부족합니다!");
+            if (myWalletData.stardust < costDust) return alert("스타더스트가 부족합니다!");
 
-            const filtered = allPrograms.filter(item => {
-                // 검색어 체크
-                const matchKeyword = item.title.toLowerCase().includes(keyword);
-                
-                // 타입 체크
-                let matchType = true;
-                if (type === 'free') matchType = !item.is_premium;
-                if (type === 'premium') matchType = item.is_premium;
+            if (!confirm(`[${title}]을(를) 구매하시겠습니까?\n비용: ${costToken} Token + ${costDust} Dust`)) return;
 
-                return matchKeyword && matchType;
+            // 서버(DB) 결제 요청
+            const { data, error } = await window.client.rpc('purchase_item', {
+                item_name: title,
+                cost_token: costToken,
+                cost_dust: costDust
             });
 
-            renderList(filtered);
+            if (data === 'success') {
+                alert("✅ 구매 완료! 다운로드가 시작됩니다.");
+                await updateWalletDisplay(); // 잔액 갱신
+                window.location.href = url; // 파일 다운로드
+            } else {
+                alert("결제 실패: " + (error ? error.message : data));
+            }
         }
-
-        loadPrograms();
     </script>
-
 </body>
 </html>
