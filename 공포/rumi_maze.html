@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루미의 미궁 (Escape Rumi)</title>
+    <style>
+        /* --- 게임 스타일 --- */
+        body {
+            background-color: #222;
+            color: white;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 600px;
+            background-color: #FFD1DC;
+            border: 10px solid #555;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* --- UI 요소 --- */
+        #inventory-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+            font-size: 14px;
+            border-top: 2px solid white;
+            z-index: 100;
+        }
+
+        .scene {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: none;
+        }
+        .scene.active { display: block; }
+
+        /* --- 오브젝트 (클릭 가능한 것들) --- */
+        .obj {
+            position: absolute;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .obj:hover { 
+            filter: drop-shadow(0 0 5px yellow); 
+            transform: scale(1.05); /* 마우스 올리면 커짐 (클릭 유도) */
+        }
+
+        /* 루미 캐릭터 */
+        #rumi {
+            width: 200px;
+            bottom: 80px;
+            left: 350px; /* 위치를 약간 오른쪽으로 */
+            transition: 0.5s;
+            z-index: 10; /* 루미 높이 */
+        }
+
+        /* 문 */
+        .door { 
+            width: 120px; height: 200px; 
+            background: #8B4513; bottom: 80px; 
+            border: 5px solid #5c2e0b; 
+            z-index: 5;
+        }
+        
+        /* [수정됨] 러그 스타일 - 클릭 잘 되게 변경 */
+        .rug { 
+            width: 250px; height: 80px; /* 크기 키움 */
+            background: #FF69B4; 
+            bottom: 30px; 
+            left: 50px; /* 루미와 안 겹치게 왼쪽으로 이동 */
+            border-radius: 50%; 
+            border: 2px solid #C71585; /* 테두리 추가해서 잘 보이게 */
+            z-index: 20; /* 루미보다 앞으로 오게 설정 (중요) */
+        }
+
+        /* 쪽지 */
+        .poster { 
+            width: 80px; height: 100px; 
+            background: white; top: 50px; left: 100px; 
+            border: 2px solid black; color: black; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 10px; text-align: center;
+            z-index: 5;
+        }
+
+        /* 키패드 UI */
+        #keypad-overlay {
+            display: none;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 150;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        #keypad-input { font-size: 30px; padding: 10px; text-align: center; margin-bottom: 20px; }
+        .key-btn { padding: 10px 20px; font-size: 20px; cursor: pointer; }
+
+        /* --- 공포 연출 --- */
+        #jumpscare-layer {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 9999;
+            justify-content: center; align-items: center;
+        }
+        #scary-face {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: contrast(200%) grayscale(100%) drop-shadow(0 0 50px red);
+            animation: shake 0.1s infinite;
+        }
+        /* 열쇠 아이템 (수정됨: z-index를 25로 높여서 러그보다 위에 보이게 함) */
+#key-item {
+    display: none;
+    bottom: 50px; left: 150px;
+    font-size: 50px;
+    z-index: 25; /* 중요! 러그(20)보다 높아야 보임 */
+    animation: bounce 1s infinite; /* 잘 보이게 둥실둥실 효과 추가 */
+}
+
+/* 열쇠 강조 애니메이션 */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <div id="room1" class="scene active">
+            <div style="position:absolute; top:20px; width:100%; text-align:center; color:#ff1493; font-weight:bold;">ROOM 1: THE PLAYROOM</div>
+            
+            <div class="door obj" style="right: 100px;" onclick="tryOpenDoor()"></div>
+            
+            <div class="rug obj" onclick="liftRug()"></div>
+            
+            <div id="key-item" class="obj" onclick="getKey()">🔑</div>
+            
+            <img id="rumi" class="obj" src="rumi_idle.png" onclick="clickRumi()">
+
+            <div class="poster obj" onclick="readNote()">Rules</div>
+        </div>
+
+        <div id="room2" class="scene" style="background-color: #333;">
+            <div style="position:absolute; top:20px; width:100%; text-align:center; color:red; font-weight:bold;">ROOM 2: DARK HALLWAY</div>
+            
+            <div class="door obj" style="left: 350px; background: #300; border-color: red;" onclick="showKeypad()"></div>
+            
+            <div style="position:absolute; top:150px; left:100px; color:red; font-size:20px; transform: rotate(-10deg);">
+                RUMI EYES = ?
+            </div>
+            
+            <img class="obj" src="rumi_idle.png" style="width:150px; bottom:80px; right:50px; filter: grayscale(100%) contrast(300%);" onclick="die('건드리지 말았어야 했다.')">
+        </div>
+
+        <div id="inventory-bar">
+            소지품: <span id="inv-list" style="margin-left: 10px; color: yellow;">없음</span>
+        </div>
+
+        <div id="keypad-overlay">
+            <h2 style="color:red;">SECURITY LOCK</h2>
+            <input type="text" id="keypad-input" placeholder="CODE">
+            <div style="margin-top:10px;">
+                <button class="key-btn" onclick="checkCode()">UNLOCK</button>
+                <button class="key-btn" onclick="document.getElementById('keypad-overlay').style.display='none'">CANCEL</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="jumpscare-layer">
+        <img id="scary-face" src="rumi_idle.png">
+    </div>
+
+    <script>
+        let inventory = [];
+        let rumiClickCount = 0;
+        const screamSound = new Audio('scream.mp3');
+
+        // 1. 아이템 획득
+        function getKey() {
+            document.getElementById('key-item').style.display = 'none';
+            inventory.push("피 묻은 열쇠");
+            updateInventory();
+            alert("열쇠를 얻었다. 뭔가 끈적거린다...");
+        }
+
+        // 2. 인벤토리 UI 업데이트
+        function updateInventory() {
+            const list = document.getElementById('inv-list');
+            list.innerText = inventory.join(", ");
+        }
+
+function liftRug() {
+    const rug = document.querySelector('.rug');
+    
+    // 러그를 화면 위로 휙 날려버림 (투명도 조절 포함)
+    rug.style.transform = "translateY(-200px) rotate(45deg)";
+    rug.style.opacity = "0.5"; 
+    
+    // 열쇠가 없으면 보이게 함
+    if (!inventory.includes("피 묻은 열쇠")) {
+        document.getElementById('key-item').style.display = 'block';
+    }
+}
+
+        // 4. 쪽지 읽기
+        function readNote() {
+            alert("쪽지 내용:\n\n'루미가 배고파 보여도 먹이를 주지 마시오.'\n'그녀의 눈을 너무 오래 바라보지 마시오.'");
+        }
+
+        // 5. 루미 클릭
+        function clickRumi() {
+            rumiClickCount++;
+            const rumi = document.getElementById('rumi');
+
+            if (rumiClickCount < 3) {
+                alert("루미: '어디 가려고? 나랑 놀자!'");
+                rumi.style.transform = "scale(1.1)";
+                setTimeout(() => rumi.style.transform = "scale(1)", 200);
+            } else if (rumiClickCount < 6) {
+                rumi.style.filter = "grayscale(50%)";
+                alert("루미의 표정이 굳어졌다.\n'나를 두고 갈 거야?'");
+            } else {
+                die("루미가 당신의 손목을 물어뜯었습니다.");
+            }
+        }
+
+        // 6. 1번방 문 열기
+        function tryOpenDoor() {
+            if (inventory.includes("피 묻은 열쇠")) {
+                alert("열쇠로 문을 열었다.");
+                changeScene('room2');
+            } else {
+                alert("문이 잠겨있다. 열쇠 구멍에서 붉은 액체가 흘러나온다.");
+            }
+        }
+
+        // 7. 씬 이동
+        function changeScene(sceneId) {
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+            document.getElementById(sceneId).classList.add('active');
+            
+            if(sceneId === 'room2') {
+                document.getElementById('game-container').style.borderColor = "red";
+            }
+        }
+
+        // 8. 키패드
+        function showKeypad() {
+            document.getElementById('keypad-overlay').style.display = 'flex';
+        }
+
+        function checkCode() {
+            const input = document.getElementById('keypad-input').value;
+            // 정답: 2 (루미 눈 개수)
+            if (input === "2") { 
+                document.getElementById('keypad-overlay').style.display = 'none';
+                alert("잠금이 해제되었습니다... 탈출구는 없습니다.");
+                location.reload(); 
+            } else {
+                die("비밀번호가 틀렸습니다. 경보음이 울립니다.");
+            }
+        }
+
+        // 공포 연출
+        function die(reason) {
+            screamSound.play().catch(()=>{});
+            const layer = document.getElementById('jumpscare-layer');
+            layer.style.display = 'flex';
+            setTimeout(() => {
+                alert(`GAME OVER\n사인: ${reason}`);
+                location.reload();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

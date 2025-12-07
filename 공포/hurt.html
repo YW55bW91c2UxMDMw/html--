@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루미와 놀자!</title>
+    <style>
+        /* 1. 팬시 아일랜드 특유의 화사한 파스텔톤 배경 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #FFD1DC; /* 파스텔 핑크 */
+            background-image: 
+                radial-gradient(white 15%, transparent 16%),
+                radial-gradient(white 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            font-family: "Binggrae", "Gulim", sans-serif; /* 귀여운 척하는 폰트 */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            transition: filter 2s; /* 서서히 어두워짐 */
+        }
+
+        /* 게임 컨테이너 */
+        #game-screen {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: white;
+            border: 10px solid #FF69B4; /* 핫핑크 테두리 */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* 루미 캐릭터 (중앙) */
+        #rumi-char {
+            width: 300px;
+            height: auto;
+            margin-top: 100px;
+            cursor: pointer; /* 클릭 유도 */
+            transition: transform 0.1s;
+        }
+        #rumi-char:active {
+            transform: scale(0.95); /* 클릭시 눌림 */
+        }
+
+        /* 대사창 */
+        #dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 100px;
+            background: #FFF0F5;
+            border: 4px solid #FF69B4;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #FF1493;
+            font-weight: bold;
+        }
+
+        /* 화면 노이즈 (후반부) */
+        #glitch-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.2);
+            display: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 이스터에그 버튼 (투명) */
+        #secret-btn {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            cursor: default;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-screen">
+        <div id="glitch-layer"></div>
+
+        <div id="secret-btn" onclick="findSecret()"></div>
+
+        <img id="rumi-char" src="rumi_idle.png" alt="Rumi" onclick="petRumi()">
+
+        <div id="dialogue-box">
+            <span id="text">안녕? 나는 루미야! 나를 쓰다듬어 줄래? (클릭)</span>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        const rumi = document.getElementById('rumi-char');
+        const textBox = document.getElementById('text');
+        const box = document.getElementById('dialogue-box');
+        const body = document.body;
+        const glitch = document.getElementById('glitch-layer');
+        
+        // 사운드 파일이 없으면 에러가 날 수 있으니 체크 필요
+        // 같은 폴더에 'scream.mp3'가 있어야 소리가 납니다.
+        const screamSound = new Audio('scream.mp3');
+
+        function petRumi() {
+            clickCount++;
+            
+            // --- 1단계: 귀여움 (0~5) ---
+            if (clickCount < 5) {
+                const phrases = ["헤헤, 기분 좋아!", "더 쓰다듬어줘!", "사랑해!"];
+                textBox.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+                
+                // [수정됨] 애니메이션 문법 오류 수정
+                rumi.animate([
+                    { transform: 'translateY(0)' },
+                    { transform: 'translateY(-20px)' },
+                    { transform: 'translateY(0)' }
+                ], { duration: 300 }); 
+            } 
+            
+            // --- 2단계: 불쾌함 (6~15) ---
+            else if (clickCount < 15) {
+                // 이미지가 준비되면 주석을 풀거나 파일명을 맞추세요
+                if(clickCount === 6) rumi.src = "rumi_hurt.png";
+
+                body.style.filter = "brightness(0.9)";
+                box.style.borderColor = "#8B0000"; 
+                box.style.color = "#8B0000";
+                textBox.innerText = "어...? 주인님, 조금 아파...";
+            }
+
+            // --- 3단계: 파괴 (16~25) ---
+            else if (clickCount < 25) {
+                if(clickCount === 16) rumi.src = "rumi_gore.png";
+
+                body.style.filter = "brightness(0.6) contrast(1.5)";
+                textBox.innerText = "그만해... 살려줘... 아파!!!";
+                createBlood(event.clientX, event.clientY); 
+            }
+
+            // --- 4단계: 사망 (25 이상) ---
+            else if (clickCount === 25) {
+                rumi.src = "rumi_dead.png";
+                
+                // 소리 재생 시도 (브라우저 보안상 실패할 수 있음)
+                screamSound.play().catch(e => console.log("소리 재생 실패:", e));
+                
+                glitch.style.display = 'block';
+                body.style.backgroundColor = 'black';
+                body.style.backgroundImage = 'none';
+                
+                textBox.innerText = "SYSTEM ERROR: TARGET ELIMINATED.";
+                box.style.backgroundColor = 'black';
+                box.style.color = 'red';
+                
+                setTimeout(() => {
+                    alert("당신은 '망가진 장난감'을 획득했습니다.");
+                    location.reload();
+                }, 3000);
+            }
+        }
+
+        // 피 효과 생성 함수
+        function createBlood(x, y) {
+            const blood = document.createElement('div');
+            blood.style.position = 'fixed';
+            blood.style.left = (x - 25) + 'px';
+            blood.style.top = (y - 25) + 'px';
+            blood.style.width = '50px';
+            blood.style.height = '50px';
+            blood.style.backgroundColor = 'red';
+            blood.style.borderRadius = '50%';
+            blood.style.pointerEvents = 'none';
+            blood.style.filter = 'blur(5px)';
+            blood.style.opacity = '0.8';
+            document.body.appendChild(blood);
+            
+            blood.animate([
+                { transform: 'translateY(0) scale(1)', opacity: 0.8 },
+                { transform: `translateY(${Math.random() * 100 + 50}px) scale(1.5)`, opacity: 0 }
+            ], { duration: 2000, fill: 'forwards' });
+        }
+
+        function findSecret() {
+            alert("힌트: 루미는 배가 고픈 게 아닙니다. 당신의 관심(클릭)이 그녀를 갉아먹고 있습니다.");
+        }
+    </script>
+</body>
+</html>
