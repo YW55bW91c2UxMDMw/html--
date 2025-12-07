@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루미 슬롯머신</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../wallet.js"></script>
+
+    <style>
+        /* 🎮 Pygame 스타일 레이아웃 */
+        body {
+            margin: 0; padding: 0;
+            background-color: #111;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; font-family: 'Pretendard', sans-serif;
+            color: white; overflow: hidden;
+        }
+
+        /* 게임 화면 프레임 (800x600 비율 유지) */
+        .game-frame {
+            width: 800px; height: 600px;
+            position: relative;
+            background-color: #000;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            /* 배경 이미지가 있으면 설정, 없으면 검은색 */
+            background-image: url('../img/background.png'); 
+            background-size: cover;
+        }
+
+        /* 상단 제목 */
+        .game-title {
+            text-align: center; font-size: 50px; color: #FFD700; /* GOLD */
+            margin-top: 30px; font-weight: bold; text-shadow: 2px 2px 0 #000;
+        }
+
+        /* 릴(Reel) 영역 */
+        .reels-area {
+            position: absolute; top: 150px; left: 0; width: 100%;
+            display: flex; justify-content: center; gap: 20px;
+        }
+
+        .reel {
+            width: 150px; height: 200px;
+            background-color: white;
+            border: 5px solid blue; /* 파이썬 코드의 BLUE */
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .reel img {
+            width: 100%; height: 100%; object-fit: contain;
+        }
+
+        /* 하단 정보창 */
+        .info-area {
+            position: absolute; bottom: 50px; left: 50px;
+            font-size: 30px; font-weight: bold; text-shadow: 2px 2px 0 #000;
+        }
+
+        /* 메시지 창 */
+        .msg-area {
+            position: absolute; bottom: 120px; width: 100%;
+            text-align: center; font-size: 30px; font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* 잭팟 팝업 이미지 */
+        #jackpot-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 600px; height: 400px;
+            pointer-events: none; opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #jackpot-overlay.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        #jackpot-overlay img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* 컨트롤 버튼 (화면 전체 클릭으로 대체 가능하지만 명시적 버튼 추가) */
+        .spin-btn {
+            position: absolute; bottom: 50px; right: 50px;
+            padding: 15px 30px; font-size: 1.5rem; font-weight: bold;
+            background: #ff0055; color: white; border: none; border-radius: 10px;
+            cursor: pointer; box-shadow: 0 5px 0 #990033;
+        }
+        .spin-btn:active { transform: translateY(5px); box-shadow: none; }
+        .spin-btn:disabled { background: #555; cursor: not-allowed; }
+
+        /* 나가기 버튼 */
+        .exit-btn {
+            position: absolute; top: 20px; right: 20px;
+            text-decoration: none; color: #aaa; font-weight: bold; background: rgba(0,0,0,0.5);
+            padding: 5px 10px; border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="snd-spin" src="spin.mp3" loop></audio>
+    <audio id="snd-jackpot" src="jackpot_alarm.wav"></audio>
+    <audio id="snd-win" src="slot-win-coins-mp3.mp3"></audio>
+    <audio id="bgm" src="slot_background.mp3" loop></audio>
+
+    <div class="game-frame">
+        <a href="game.html" class="exit-btn">나가기</a>
+        <div class="game-title">루미 슬롯</div>
+
+        <div class="reels-area">
+            <div class="reel"><img id="img1" src="../img/rumi1.png"></div>
+            <div class="reel"><img id="img2" src="../img/rumi2.png"></div>
+            <div class="reel"><img id="img3" src="../img/rumi3.png"></div>
+        </div>
+
+        <div class="msg-area" id="msg">스핀 버튼을 눌러주세요!</div>
+
+        <div class="info-area">
+            <div id="money-display">소지금: Loading...</div>
+            <div>베팅: 1,000원</div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn" onclick="startSpin()">SPIN</button>
+
+        <div id="jackpot-overlay"><img src="../img/jackpot.png"></div>
+    </div>
+
+    <script>
+        // 파이썬 코드의 리소스 리스트와 동일하게 설정
+        const symbolImages = [
+            "rumi1.png", "rumi2.png", "rumi3.png", "rumi4.png", "rumi_jackpot.png"
+        ];
+        
+        // 파이썬 로직 변수
+        const betAmount = 1000;
+        let isSpinning = false;
+        const msgEl = document.getElementById('msg');
+        const reels = [document.getElementById('img1'), document.getElementById('img2'), document.getElementById('img3')];
+        
+        // 초기화 (지갑 연동)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                updateUI();
+                // 배경음악 재생 (사용자 클릭 후 재생 정책 대응)
+                document.body.addEventListener('click', () => {
+                    const bgm = document.getElementById('bgm');
+                    if(bgm.paused) { bgm.volume = 0.5; bgm.play().catch(()=>{}); }
+                }, { once: true });
+            }, 500);
+        });
+
+        function updateUI() {
+            if (typeof myWallet !== 'undefined') {
+                document.getElementById('money-display').innerText = `소지금: ${myWallet.token.toLocaleString()}원`; // 토큰을 원으로 표시
+            }
+        }
+
+        async function startSpin() {
+            if (isSpinning) return;
+
+            // 지갑 체크
+            if (typeof updateBalance !== 'function') return alert("지갑 시스템 오류");
+            if (myWallet.token < betAmount) return alert("돈이 부족합니다!");
+
+            // 돈 차감
+            const success = await updateBalance('token', -betAmount);
+            if (!success) return alert("오류 발생");
+            updateUI();
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            msgEl.innerText = "행운을 빕니다!";
+            
+            // 사운드 재생
+            document.getElementById('snd-spin').play();
+            document.getElementById('jackpot-overlay').classList.remove('show'); // 잭팟 이미지 숨김
+
+            // 애니메이션 (이미지 빠르게 교체)
+            let spinInterval = setInterval(() => {
+                reels.forEach(img => {
+                    const randomImg = symbolImages[Math.floor(Math.random() * symbolImages.length)];
+                    img.src = randomImg;
+                });
+            }, 100);
+
+            // 2초 후 멈춤 (파이썬 코드: 2000ms)
+            setTimeout(() => {
+                clearInterval(spinInterval);
+                document.getElementById('snd-spin').pause();
+                document.getElementById('snd-spin').currentTime = 0;
+                
+                // 최종 결과 결정
+                const results = [
+                    getRandomSymbol(), getRandomSymbol(), getRandomSymbol()
+                ];
+
+                // 화면 업데이트
+                reels[0].src = results[0];
+                reels[1].src = results[1];
+                reels[2].src = results[2];
+
+                checkResult(results);
+                
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+            }, 2000);
+        }
+
+        function getRandomSymbol() {
+            return symbolImages[Math.floor(Math.random() * symbolImages.length)];
+        }
+
+        // 파이썬 check_result 함수 로직 이식
+        async function checkResult(results) {
+            // 이미지 파일명으로 비교
+            const [r1, r2, r3] = results;
+            let win = 0;
+            let message = "아쉬워요, 다시 도전!";
+            let sound = null;
+
+            // 1. 잭팟 심볼 3개 (초대박)
+            if (r1 === "rumi_jackpot.png" && r2 === "rumi_jackpot.png" && r3 === "rumi_jackpot.png") {
+                win = betAmount * 50;
+                message = `초대박! +${win.toLocaleString()}원`;
+                sound = 'snd-jackpot';
+                showJackpotEffect();
+            }
+            // 2. 일반 심볼 3개 일치 (잭팟)
+            else if (r1 === r2 && r2 === r3) {
+                win = betAmount * 10;
+                message = `잭팟! +${win.toLocaleString()}원`;
+                sound = 'snd-jackpot';
+                showJackpotEffect();
+            }
+            // 3. 2개 일치 (일반 당첨)
+            else if (r1 === r2 || r2 === r3 || r1 === r3) {
+                win = Math.floor(betAmount * 1.5);
+                message = `2개 일치! +${win.toLocaleString()}원`;
+                sound = 'snd-win';
+            }
+
+            msgEl.innerText = message;
+            msgEl.style.color = win > 0 ? "#FFD700" : "white";
+
+            if (win > 0) {
+                await updateBalance('token', win);
+                updateUI();
+                if (sound) document.getElementById(sound).play();
+            }
+        }
+
+        function showJackpotEffect() {
+            const overlay = document.getElementById('jackpot-overlay');
+            overlay.classList.add('show');
+            // 3초 뒤에 사라짐
+            setTimeout(() => {
+                overlay.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
