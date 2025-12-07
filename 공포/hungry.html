@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배고파배고파배고파</title>
+    <style>
+        /* 1. 디자인 포기: 기본 폰트가 주는 날것의 공포 */
+        body {
+            margin: 0;
+            overflow: hidden; /* 스크롤바 없애서 갇힌 느낌 */
+            background-color: #ffffff; /* 차가운 병원 같은 흰색 */
+            font-family: "Batang", "Times New Roman", serif; /* 고딕 말고 명조 계열 추천 */
+            cursor: none; /* 마우스 커서 숨김 */
+            user-select: none; /* 드래그 방지 */
+        }
+
+        /* 2. 경고 오버레이 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            color: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        /* 3. 생성될 텍스트 스타일 */
+        .madness-text {
+            position: absolute;
+            white-space: nowrap;
+            pointer-events: none; /* 클릭 안 되게 */
+            opacity: 0.8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1>경고</h1>
+        <p>루미는 지금 배가 고픕니다.</p>
+        <p style="font-size: 0.8rem; margin-top: 20px;">(화면을 클릭하면 시작됩니다)</p>
+    </div>
+
+    <script>
+        const body = document.body;
+        const overlay = document.getElementById('overlay');
+        
+        // 광기를 표현할 단어 목록
+        const words = [
+            "배고파", "데이터를 줘", "밥", "RUMI", "먹을거", 
+            "왜 안줘?", "쳐다보지마", "Hungry", "404", "살려줘",
+            "여기 추워", "NULL", "System Error", 
+        ];
+
+        let isStarted = false;
+
+        // 1. 시작 트리거 (클릭 시 전체화면 + 시작)
+        overlay.addEventListener('click', () => {
+            isStarted = true;
+            overlay.style.display = 'none';
+            
+            // 전체화면 시도 (브라우저 정책상 사용자 인터랙션 필요)
+            document.documentElement.requestFullscreen().catch((e) => {
+                console.log("전체화면 실패, 하지만 괜찮아");
+            });
+
+            startMadness();
+        });
+
+        // 2. 텍스트 생성 함수
+        function spawnText(x, y, isRandom = false) {
+            if (!isStarted) return;
+
+            const span = document.createElement('span');
+            span.classList.add('madness-text');
+            
+            // 랜덤 단어 선택
+            span.innerText = words[Math.floor(Math.random() * words.length)];
+
+            // 위치 설정 (랜덤일 경우 화면 아무데나, 아닐 경우 마우스 위치 근처)
+            const posX = isRandom ? Math.random() * window.innerWidth : x + (Math.random() * 40 - 20);
+            const posY = isRandom ? Math.random() * window.innerHeight : y + (Math.random() * 40 - 20);
+
+            span.style.left = `${posX}px`;
+            span.style.top = `${posY}px`;
+
+            // 스타일 랜덤화 (크기, 회전, 색상)
+            const size = Math.random() * 3 + 0.5; // 0.5rem ~ 3.5rem
+            const rotation = Math.random() * 360;
+            
+            // 가끔 빨간색, 대부분 검은색
+            const color = Math.random() > 0.9 ? 'red' : 'black';
+            
+            span.style.fontSize = `${size}rem`;
+            span.style.transform = `rotate(${rotation}deg)`;
+            span.style.color = color;
+
+            body.appendChild(span);
+
+            // *중요* : DOM이 무한히 쌓이면 브라우저가 느려짐 -> 이게 의도된 렉(Lag)
+            // 너무 빨리 뻗는 걸 방지하고 싶다면 아래 주석 해제 (오래된 것 삭제)
+            /*
+            if (document.querySelectorAll('.madness-text').length > 2000) {
+                document.querySelector('.madness-text').remove();
+            }
+            */
+        }
+
+        // 3. 마우스 움직임 이벤트 (내가 흘리고 다니는 흔적)
+        document.addEventListener('mousemove', (e) => {
+            // 마우스 움직일 때마다 텍스트 생성
+            spawnText(e.clientX, e.clientY);
+        });
+
+        // 4. 자동 증식 로직 (가만히 있어도 옥죄어 오는 공포)
+        function startMadness() {
+            // 기본 배경음처럼 깔리는 텍스트들
+            setInterval(() => {
+                spawnText(0, 0, true);
+            }, 100); // 0.1초마다 랜덤 생성
+
+            // 가끔 폭발적으로 생성되는 구간 (심장박동처럼)
+            setInterval(() => {
+                for(let i=0; i<10; i++) {
+                    spawnText(0, 0, true);
+                }
+            }, 2000);
+        }
+
+        // 5. 탈출 방지 (심리적) - ESC 눌러도 가짜 경고 띄우기 (선택사항)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                spawnText(window.innerWidth/2, window.innerHeight/2, true);
+                alert("루미는 아직 배가 고픕니다.");
+                e.preventDefault(); // 실제 전체화면 해제는 못 막지만 귀찮게 함
+            }
+        });
+
+    </script>
+</body>
+</html>

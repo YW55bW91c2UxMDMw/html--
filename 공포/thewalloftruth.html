@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진실을 보라</title>
+    <style>
+        /* 1. 눈이 아픈 원색 컬러 배합 */
+        body {
+            background-color: #FFFF00; /* 형광 노랑 */
+            color: #FF0000; /* 새빨강 */
+            font-family: "Gulim", "Batang", serif; /* 굴림체/바탕체 (시스템 폰트의 투박함) */
+            margin: 0;
+            overflow: hidden; /* 스크롤바 숨김 (갇힌 느낌) */
+            word-break: break-all; /* 단어 중간에서 끊어버림 */
+        }
+
+        /* 2. 배경에 깔리는 빽빽한 텍스트 (Texture) */
+        #background-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            font-size: 14px;
+            line-height: 1.1;
+            opacity: 0.5;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            color: #0000FF; /* 배경은 파란색 */
+            text-align: justify;
+        }
+
+        /* 3. 화면 위로 떠다니는 강조 텍스트 */
+        .madness {
+            position: absolute;
+            font-weight: bold;
+            z-index: 10;
+            mix-blend-mode: multiply; /* 글자가 겹치면 색이 진해짐 */
+            white-space: nowrap;
+        }
+
+        /* 깜빡이는 애니메이션 */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .blinking {
+            animation: blink 0.2s infinite;
+            color: black !important;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="background-text"></div>
+
+    <script>
+        // Joy of Satan 번역체 (부자연스러운 직역)
+        const content = `
+        바보들은 그들이 무엇을 행하고 있는지 알지 못한다. 에너지는 위쪽으로 보내어지고 있음이다. 
+        그것은 지구로 들어가 그녀를 보충해야만 한다. 
+        포인트-업 펜타그램의 과도한 사용은 에너지를 우주 공간으로 던져버리고 있으며, 
+        다수의 문제들을 야기하고, 이 문제들에 대항하여 자신을 방어할 지구의 능력을 배수시키고 있다.
+        - 사탄/루시퍼
+        이것은 영혼과 관계가 있으며 뉴 에이지 운동이 추종자들에게 오로지 더 높은 차크라에만 집중하도록 
+        계속해서 촉구하는 방법과 관련이 있다. 각각의 차크라는 남성과 여성의 쌍을 가지고 둘 다 함께 일한다. 
+        더 높은 차크라와 더 낮은 차크라 양쪽 모두에 균형이 있어야만 한다.
+        `;
+
+        // 텍스트를 반복해서 배경을 꽉 채우는 함수
+        function fillBackground() {
+            const bgDiv = document.getElementById('background-text');
+            // 화면을 덮을 만큼 텍스트를 복사 (대략 500번 반복)
+            let rawText = content.replace(/\n/g, " ").trim();
+            let hugeBlock = "";
+            for(let i=0; i<500; i++) {
+                hugeBlock += rawText + " ";
+            }
+            bgDiv.innerText = hugeBlock;
+        }
+
+        fillBackground();
+
+        // 강박적인 텍스트 생성기
+        const sentences = [
+            "바보들은 알지 못한다", 
+            "에너지는 위로 보내진다", 
+            "그녀를 보충하라", 
+            "포인트-업 펜타그램", 
+            "우주로 던져버리고 있다", 
+            "지구의 능력을 배수시킨다", 
+            "사탄/루시퍼", 
+            "영혼과 관계가 있다", 
+            "뉴 에이지 운동의 거짓", 
+            "높은 차크라에 집중하라", 
+            "남성과 여성의 쌍", 
+            "균형이 있어야만 한다",
+            "DO NOT FOCUS SOLELY",
+            "ENERGY IS LOST"
+        ];
+
+        function spawnMadness() {
+            const span = document.createElement('div');
+            span.classList.add('madness');
+            
+            // 랜덤 문장 선택
+            span.innerText = sentences[Math.floor(Math.random() * sentences.length)];
+            
+            // 랜덤 위치
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            span.style.left = x + 'px';
+            span.style.top = y + 'px';
+            
+            // 랜덤 스타일 (크기, 회전, 색상)
+            const size = Math.random() * 40 + 10; // 10px ~ 50px
+            span.style.fontSize = size + 'px';
+            
+            const deg = Math.random() * 90 - 45; // -45도 ~ 45도 회전
+            span.style.transform = `rotate(${deg}deg)`;
+
+            // 색상: 80% 확률로 빨강, 20% 확률로 파랑
+            span.style.color = Math.random() > 0.2 ? '#FF0000' : '#0000FF';
+
+            // 가끔씩 깜빡이는 효과 (중요한 단어 강조)
+            if (Math.random() < 0.05) {
+                span.classList.add('blinking');
+                span.style.zIndex = 100; // 맨 앞으로
+                span.style.fontSize = '60px'; // 왕크게
+            }
+
+            document.body.appendChild(span);
+
+            // 텍스트가 너무 많아지면(300개 초과) 오래된 것 삭제 (브라우저 보호)
+            if (document.body.childElementCount > 300) {
+                // 배경 div 제외하고 삭제
+                const madElements = document.querySelectorAll('.madness');
+                if(madElements.length > 0) madElements[0].remove();
+            }
+        }
+
+        // 마우스 움직일 때마다 텍스트 생성 (사용자 행동에 반응)
+        document.addEventListener('mousemove', (e) => {
+             // 마우스 위치 근처에 생성
+            const span = document.createElement('div');
+            span.classList.add('madness');
+            span.innerText = "균형"; // 마우스 따라다니는 단어
+            span.style.left = (e.clientX + 10) + 'px';
+            span.style.top = (e.clientY + 10) + 'px';
+            span.style.color = 'black';
+            span.style.fontSize = '12px';
+            document.body.appendChild(span);
+        });
+
+        // 자동 증식 (0.1초마다)
+        setInterval(spawnMadness, 100);
+
+        // 스크롤 강제 이동 (사용자가 읽으려 하면 도망감/혹은 강제로 읽힘)
+        setInterval(() => {
+            window.scrollBy(0, 1);
+        }, 50);
+
+    </script>
+</body>
+</html>
